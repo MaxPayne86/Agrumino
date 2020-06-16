@@ -30,7 +30,7 @@ WiFiClient client;
 
 //  ++++++++++++++++++++++++++++++++++++ MASSIMO
 #define SECTOR_SIZE 4096u
-#define N_SAMPLES 1u  // vecchio 5u
+#define N_SAMPLES 5u  // vecchio 5u
 
 typedef struct
 {
@@ -72,7 +72,7 @@ uint8_t crc8b = 0;
 
 uint8_t inByte = 0;
 
-int couterLoop;
+
 
 //  ++++++++++++++++++++++++++++++++++++
 
@@ -174,35 +174,66 @@ void loop() {
   agrumino.turnBoardOn();
   agrumino.turnLedOn();
 
-  for (uint8_t i = 0; i < N_SAMPLES; i++) {
-    PtrFlashMemory->Fields.data.vector[i].temp = agrumino.readTempC();
-    PtrFlashMemory->Fields.data.vector[i].soil = agrumino.readSoil();
-    PtrFlashMemory->Fields.data.vector[i].lux = agrumino.readLux();
-    PtrFlashMemory->Fields.data.vector[i].batt = agrumino.readBatteryVoltage();
-    PtrFlashMemory->Fields.data.vector[i].battLevel = agrumino.readBatteryLevel();
-    PtrFlashMemory->Fields.data.vector[i].usb = agrumino.isAttachedToUSB();
-    PtrFlashMemory->Fields.data.vector[i].charge = agrumino.isBatteryCharging();
+  tmp = PtrFlashMemory->Fields.index;
+  if(tmp > N_SAMPLES-1) { // Circular buffer behaviour
+    tmp = 0;
+    PtrFlashMemory->Fields.index = tmp;
+  }
+ // currentIndex = PtrFlashMemory->Fields.index;
 
-    Serial.println("temperature:       " + String(PtrFlashMemory->Fields.data.vector[i].temp) + "°C");
-    Serial.println("soilMoisture:      " + String(PtrFlashMemory->Fields.data.vector[i].soil) + "%");
-    Serial.println("illuminance :      " + String(PtrFlashMemory->Fields.data.vector[i].lux) + " lux");
-    Serial.println("batteryVoltage :   " + String(PtrFlashMemory->Fields.data.vector[i].batt) + " V");
-    Serial.println("batteryLevel :     " + String(PtrFlashMemory->Fields.data.vector[i].battLevel) + "%");
-    Serial.println("isAttachedToUSB:   " + String(PtrFlashMemory->Fields.data.vector[i].usb));
-    Serial.println("isBatteryCharging: " + String(PtrFlashMemory->Fields.data.vector[i].charge));
+    Serial.println("*****   INDICE CORRENTE:  " + String(tmp));
+
+    PtrFlashMemory->Fields.data.vector[tmp].temp = agrumino.readTempC();
+    PtrFlashMemory->Fields.data.vector[tmp].soil = agrumino.readSoil();
+    PtrFlashMemory->Fields.data.vector[tmp].lux = agrumino.readLux();
+    PtrFlashMemory->Fields.data.vector[tmp].batt = agrumino.readBatteryVoltage();
+    PtrFlashMemory->Fields.data.vector[tmp].battLevel = agrumino.readBatteryLevel();
+    PtrFlashMemory->Fields.data.vector[tmp].usb = agrumino.isAttachedToUSB();
+    PtrFlashMemory->Fields.data.vector[tmp].charge = agrumino.isBatteryCharging();
+
+    PtrFlashMemory->Fields.index++; // Increment index
+
+    Serial.println("temperature:       " + String(PtrFlashMemory->Fields.data.vector[tmp].temp) + "°C");
+    Serial.println("soilMoisture:      " + String(PtrFlashMemory->Fields.data.vector[tmp].soil) + "%");
+    Serial.println("illuminance :      " + String(PtrFlashMemory->Fields.data.vector[tmp].lux) + " lux");
+    Serial.println("batteryVoltage :   " + String(PtrFlashMemory->Fields.data.vector[tmp].batt) + " V");
+    Serial.println("batteryLevel :     " + String(PtrFlashMemory->Fields.data.vector[tmp].battLevel) + "%");
+    Serial.println("isAttachedToUSB:   " + String(PtrFlashMemory->Fields.data.vector[tmp].usb));
+    Serial.println("isBatteryCharging: " + String(PtrFlashMemory->Fields.data.vector[tmp].charge));
     Serial.println(); 
-  }
 
-
-
-  // Change this if you whant to change your thing name
-  // We use the chip Id to avoid name clashing
-  String dweetThingName = "Agrumino-" + getChipId();
   
-  for (uint8_t i = 0; i < N_SAMPLES; i++) {
-    // Send data to our web service
-    sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp, PtrFlashMemory->Fields.data.vector[i].soil, PtrFlashMemory->Fields.data.vector[i].lux, PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge);
+
+
+  // Commit
+  // Calculate checksum
+  crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
+  crc8b = (uint8_t)crc32b&0xff;
+  Serial.println("Setting CRC32=" + String(crc8b));
+  EEPROM.write(SECTOR_SIZE-1, crc8b); // Put crc at the end of sector
+  if (EEPROM.commit()) {
+    Serial.println("EEPROM successfully committed");
+  } else {
+    Serial.println("ERROR! EEPROM commit failed");
+  }  
+
+  
+  if(tmp == N_SAMPLES - 1) {
+      // Change this if you whant to change your thing name
+      // We use the chip Id to avoid name clashing
+      String dweetThingName = "Agrumino-" + getChipId();
+      Serial.println("INDEX:  " + String(tmp));
+      for (uint8_t i = 0; i < N_SAMPLES; i++) {
+        // Send data to our web service
+        sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp, PtrFlashMemory->Fields.data.vector[i].soil, PtrFlashMemory->Fields.data.vector[i].lux, PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge);
+        delay(5000);
+      }  
+
+      //  qui metteremo la inizializzazione della memoria 
   }
+
+
+
   
   // Blink when the business is done for giving an Ack to the user
   blinkLed(200, 2);
@@ -278,17 +309,19 @@ void sendData(String dweetName, float temp, int soil, float lux, float batt, uns
 
 // Returns the Json body that will be sent to the send data HTTP POST API
 String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge) {
-  JsonObject& jsonPost = jsonBuffer.createObject();
-  jsonPost["temp"] = String(temp);
-  jsonPost["soil"] = String(soil);
-  jsonPost["lux"]  = String(lux);
-  jsonPost["battVolt"] = String(batt);
-  jsonPost["battLevel"] = String(battLevel);
-  jsonPost["battCharging"] = String(charge);
-  jsonPost["usbConnected"]  = String(usb);
+//  JsonObject& jsonPost = jsonBuffer.createObject();
+//  jsonPost["temp"] = String(temp);
+//  jsonPost["soil"] = String(soil);
+//  jsonPost["lux"]  = String(lux);
+//  jsonPost["battVolt"] = String(batt);
+//  jsonPost["battLevel"] = String(battLevel);
+//  jsonPost["battCharging"] = String(charge);
+//  jsonPost["usbConnected"]  = String(usb);
 
-  String jsonPostString;
-  jsonPost.printTo(jsonPostString);
+  //String jsonPostString;
+  //jsonPost.printTo(jsonPostString);
+
+  String jsonPostString = "{\"temp\" : " + String(temp) + ", \"soil\" : " + String(soil) + ", \"lux\" : " + String(lux) + ", \"batt\" : " + String(batt) + ", \"battLevel\" : " + String(battLevel) +", \"charge\" : " + String(charge) +", \"usb\" : " + String(usb) + "}";
 
   return jsonPostString;
 }
