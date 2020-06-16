@@ -12,8 +12,11 @@
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 
 // Time to sleep in second between the readings/data sending
-#define SLEEP_TIME_SEC 20 // 5 min
+#define SLEEP_TIME_SEC 20 // shoud be 3600 (1h)
 
+#define N_SAMPLES 4u  // samples number before transmission
+
+#define SECTOR_SIZE 4096u
 
 // Web Server data, in our sample we use Dweet.io.
 const char* WEB_SERVER_HOST = "dweet.io";
@@ -22,15 +25,14 @@ const String WEB_SERVER_API_SEND_DATA = "/dweet/quietly/for/"; // The Dweet name
 // Our super cool lib
 Agrumino agrumino;
 
+
 // Used for sending Json POST requests
-StaticJsonBuffer<200> jsonBuffer;
+StaticJsonBuffer<200 * N_SAMPLES> jsonBuffer;
 // Used to create TCP connections and make Http calls
 WiFiClient client;
 
 
-//  ++++++++++++++++++++++++++++++++++++ MASSIMO
-#define SECTOR_SIZE 4096u
-#define N_SAMPLES 5u  // vecchio 5u
+
 
 typedef struct
 {
@@ -62,19 +64,9 @@ typedef union flashMemory
 
 flashMemory_t *PtrFlashMemory = NULL;
 
-float val = 0.0;
 uint32_t crc32b = 0;
-
-uint16_t adc_value = 0;
 uint16_t tmp = 0;
-int8_t currentIndex = 0;
 uint8_t crc8b = 0;
-
-uint8_t inByte = 0;
-
-
-
-//  ++++++++++++++++++++++++++++++++++++
 
 void setup() {
 
@@ -145,25 +137,21 @@ void setup() {
     agrumino.deepSleepSec(SLEEP_TIME_SEC);
   }
 
-//  ++++++++++++++++++++++++++++++++++++ MASSIMO
+  // Initialize EEPROM and pointer
   Serial.println("Data struct to EEPROM test program");
   EEPROM.begin(SECTOR_SIZE);
   PtrFlashMemory = (flashMemory_t *)EEPROM.getDataPtr(); // Assigning pointer address to flash memory block dumped in RAM
   Serial.println("Memory assignement successful!");
+  
   // Calculate checksum and validate memory area
   crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
   crc8b = EEPROM.read(SECTOR_SIZE-1); // Read crc at the end of sector
   Serial.println("Calculated CRC32=" + String(crc32b&0xff) + " readed=" + String(crc8b));
+  
   if(((uint8_t)crc32b&0xff) == crc8b) 
     Serial.println("CRC32 pass!");
   else
     Serial.println("CRC32 fail!");
-
-
-
-
-
-//  ++++++++++++++++++++++++++++++++++++ 
 
   
 }
@@ -174,14 +162,15 @@ void loop() {
   agrumino.turnBoardOn();
   agrumino.turnLedOn();
 
+  // index is the last memorized struct of sensor data
   tmp = PtrFlashMemory->Fields.index;
   if(tmp > N_SAMPLES-1) { // Circular buffer behaviour
     tmp = 0;
     PtrFlashMemory->Fields.index = tmp;
   }
- // currentIndex = PtrFlashMemory->Fields.index;
 
-    Serial.println("*****   INDICE CORRENTE:  " + String(tmp));
+
+    Serial.println("*****   CURRENT INDEX IS:  " + String(tmp));
 
     PtrFlashMemory->Fields.data.vector[tmp].temp = agrumino.readTempC();
     PtrFlashMemory->Fields.data.vector[tmp].soil = agrumino.readSoil();
@@ -203,14 +192,13 @@ void loop() {
     Serial.println(); 
 
   
-
-
-  // Commit
   // Calculate checksum
   crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
   crc8b = (uint8_t)crc32b&0xff;
   Serial.println("Setting CRC32=" + String(crc8b));
   EEPROM.write(SECTOR_SIZE-1, crc8b); // Put crc at the end of sector
+  
+  // Commit sensor data at current index
   if (EEPROM.commit()) {
     Serial.println("EEPROM successfully committed");
   } else {
@@ -222,14 +210,15 @@ void loop() {
       // Change this if you whant to change your thing name
       // We use the chip Id to avoid name clashing
       String dweetThingName = "Agrumino-" + getChipId();
-      Serial.println("INDEX:  " + String(tmp));
+      
+      Serial.println("Now I'm sending " + String(N_SAMPLES) + " json(s) to Dweet");
       for (uint8_t i = 0; i < N_SAMPLES; i++) {
         // Send data to our web service
         sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp, PtrFlashMemory->Fields.data.vector[i].soil, PtrFlashMemory->Fields.data.vector[i].lux, PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge);
         delay(5000);
       }  
-
-      //  qui metteremo la inizializzazione della memoria 
+      // I sent all data so I can clean my memory
+      cleanMemory();
   }
 
 
@@ -309,20 +298,18 @@ void sendData(String dweetName, float temp, int soil, float lux, float batt, uns
 
 // Returns the Json body that will be sent to the send data HTTP POST API
 String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge) {
-//  JsonObject& jsonPost = jsonBuffer.createObject();
-//  jsonPost["temp"] = String(temp);
-//  jsonPost["soil"] = String(soil);
-//  jsonPost["lux"]  = String(lux);
-//  jsonPost["battVolt"] = String(batt);
-//  jsonPost["battLevel"] = String(battLevel);
-//  jsonPost["battCharging"] = String(charge);
-//  jsonPost["usbConnected"]  = String(usb);
+  JsonObject& jsonPost = jsonBuffer.createObject();
+  jsonPost["temp"] = String(temp);
+  jsonPost["soil"] = String(soil);
+  jsonPost["lux"]  = String(lux);
+  jsonPost["battVolt"] = String(batt);
+  jsonPost["battLevel"] = String(battLevel);
+  jsonPost["battCharging"] = String(charge);
+  jsonPost["usbConnected"]  = String(usb);
 
-  //String jsonPostString;
-  //jsonPost.printTo(jsonPostString);
-
-  String jsonPostString = "{\"temp\" : " + String(temp) + ", \"soil\" : " + String(soil) + ", \"lux\" : " + String(lux) + ", \"batt\" : " + String(batt) + ", \"battLevel\" : " + String(battLevel) +", \"charge\" : " + String(charge) +", \"usb\" : " + String(usb) + "}";
-
+  String jsonPostString;
+  jsonPost.printTo(jsonPostString);
+  
   return jsonPostString;
 }
 
@@ -398,4 +385,18 @@ uint32_t calculateCRC32(const uint8_t *data, size_t length) {
     }
   }
   return crc;
+}
+
+void cleanMemory() {
+  Serial.println("RAM memory manual initialization");
+  PtrFlashMemory->Fields.index = 0;
+  for (uint8_t i = 0; i < N_SAMPLES; i++) {
+    PtrFlashMemory->Fields.data.vector[i].temp = 0.0f;
+    PtrFlashMemory->Fields.data.vector[i].soil = 0u;
+    PtrFlashMemory->Fields.data.vector[i].lux = 0.0f;
+    PtrFlashMemory->Fields.data.vector[i].batt = 0.0f;
+    PtrFlashMemory->Fields.data.vector[i].battLevel = 0u;
+    PtrFlashMemory->Fields.data.vector[i].usb = false;
+    PtrFlashMemory->Fields.data.vector[i].charge = false;
+  }
 }
