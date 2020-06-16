@@ -15,6 +15,8 @@
 
 #include "Arduino.h"
 
+#include "EEPROM.h"
+
 // Internal map of the PCA9536 pin_t typedef. See PCA9536.h
 typedef enum:byte {
   // GPIO_0 = 0, Green led, manages via specific functions.
