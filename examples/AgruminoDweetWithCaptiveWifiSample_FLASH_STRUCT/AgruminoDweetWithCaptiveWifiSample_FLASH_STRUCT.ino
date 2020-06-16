@@ -14,8 +14,6 @@
 // Time to sleep in second between the readings/data sending
 #define SLEEP_TIME_SEC 20 // shoud be 3600 (1h)
 
-#define N_SAMPLES 4u  // samples number before transmission
-
 #define SECTOR_SIZE 4096u
 
 // Web Server data, in our sample we use Dweet.io.

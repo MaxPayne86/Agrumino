@@ -17,6 +17,8 @@
 
 #include "EEPROM.h"
 
+#define N_SAMPLES 4u  // Number of objects with samples to store
+
 // Datatypes for data sensors
 typedef struct
 {
