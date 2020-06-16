@@ -25,42 +25,10 @@ const String WEB_SERVER_API_SEND_DATA = "/dweet/quietly/for/"; // The Dweet name
 // Our super cool lib
 Agrumino agrumino;
 
-
 // Used for sending Json POST requests
 StaticJsonBuffer<200 * N_SAMPLES> jsonBuffer;
 // Used to create TCP connections and make Http calls
 WiFiClient client;
-
-
-
-
-typedef struct
-{
-  float temp;
-  uint16_t soil;
-  float lux;
-  float batt;
-  uint16_t battLevel;
-  boolean usb;
-  boolean charge;
-}SensorData_t;
-
-typedef struct
-{
-  SensorData_t  vector[N_SAMPLES];
-}SensorDataVector_t;
-
-typedef struct
-{
-  uint16_t index;
-  SensorDataVector_t data;
-}Fields_t;
-
-typedef union flashMemory
-{
-  Fields_t Fields;
-  uint8_t Bytes[sizeof(Fields_t)];
-}flashMemory_t;
 
 flashMemory_t *PtrFlashMemory = NULL;
 

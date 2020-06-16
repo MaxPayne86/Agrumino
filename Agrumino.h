@@ -17,6 +17,35 @@
 
 #include "EEPROM.h"
 
+// Datatypes for data sensors
+typedef struct
+{
+  float temp;
+  uint16_t soil;
+  float lux;
+  float batt;
+  uint16_t battLevel;
+  boolean usb;
+  boolean charge;
+}SensorData_t;
+
+typedef struct
+{
+  SensorData_t  vector[N_SAMPLES];
+}SensorDataVector_t;
+
+typedef struct
+{
+  uint16_t index;
+  SensorDataVector_t data;
+}Fields_t;
+
+typedef union flashMemory
+{
+  Fields_t Fields;
+  uint8_t Bytes[sizeof(Fields_t)];
+}flashMemory_t;
+
 // Internal map of the PCA9536 pin_t typedef. See PCA9536.h
 typedef enum:byte {
   // GPIO_0 = 0, Green led, manages via specific functions.
