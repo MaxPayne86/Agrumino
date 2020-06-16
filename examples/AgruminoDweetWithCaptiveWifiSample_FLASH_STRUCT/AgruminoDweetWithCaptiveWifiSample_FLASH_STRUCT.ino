@@ -140,6 +140,7 @@ void setup() {
   // Initialize EEPROM and pointer
   Serial.println("Data struct to EEPROM test program");
   EEPROM.begin(SECTOR_SIZE);
+  
   PtrFlashMemory = (flashMemory_t *)EEPROM.getDataPtr(); // Assigning pointer address to flash memory block dumped in RAM
   Serial.println("Memory assignement successful!");
   
@@ -151,8 +152,10 @@ void setup() {
   if(((uint8_t)crc32b&0xff) == crc8b) 
     Serial.println("CRC32 pass!");
   else
-    Serial.println("CRC32 fail!");
-
+  {
+    Serial.println("CRC32 fail! I clean memory!");
+    cleanMemory();
+  }
   
 }
 
