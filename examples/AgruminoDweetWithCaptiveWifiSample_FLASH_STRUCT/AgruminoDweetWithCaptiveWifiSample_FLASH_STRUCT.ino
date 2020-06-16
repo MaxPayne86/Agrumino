@@ -1,6 +1,12 @@
 /*
   AgruminoCaptiveWiSample.ino - Sample project for Agrumino board using the Agrumino library.
+  !!!WARNING!!! You need to program the board with option Tools->Erase Flash->All Flash Contents
+
   Created by giuseppe.broccia@lifely.cc on October 2017.
+  Modified June 2020 by:
+  Massimo Pennazio massimo.pennazio@abinsula.com
+  Martina Mascia martina.mascia@abinsula.com
+  Ricardo Medda ricardo.medda@abinsula.com
 
   @see Agrumino.h for the documentation of the lib
 */
@@ -12,7 +18,7 @@
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 
 // Time to sleep in second between the readings/data sending
-#define SLEEP_TIME_SEC 20 // should be 3600 (1h)
+#define SLEEP_TIME_SEC 3600 // [Seconds]
 
 // The size of the flash sector we want to use to store samples (do not modify).
 #define SECTOR_SIZE 4096u
@@ -112,7 +118,7 @@ void setup() {
   Serial.println("Memory assignement successful!");
 
   // Calculate checksum and validate memory area
-  // TODO: use 32bit crc  
+  // TODO: use 32bit crc
   crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
   crc8b = EEPROM.read(SECTOR_SIZE - 1); // Read crc at the end of sector
   Serial.println("CRC32 calculated=" + String(crc32b & 0xff) + " readed=" + String(crc8b));
@@ -141,7 +147,7 @@ void loop() {
 
   Serial.println("*****   CURRENT INDEX IS:  " + String(currentIndex));
 
-  // Copy sensors data to struct 
+  // Copy sensors data to struct
   PtrFlashMemory->Fields.data.vector[currentIndex].temp = agrumino.readTempC();
   PtrFlashMemory->Fields.data.vector[currentIndex].soil = agrumino.readSoil();
   PtrFlashMemory->Fields.data.vector[currentIndex].lux = agrumino.readLux();
@@ -178,7 +184,7 @@ void loop() {
 
   // We have the queue full, we need to consume data and send to cloud.
   // Variable currentIndex will be resetted @next loop.
-  if (currentIndex == N_SAMPLES) {
+  if (currentIndex == N_SAMPLES - 1) {
     // Change this if you whant to change your thing name
     // We use the chip Id to avoid name clashing
     String dweetThingName = "Agrumino-" + getChipId();
