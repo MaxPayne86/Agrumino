@@ -14,6 +14,7 @@
 // Time to sleep in second between the readings/data sending
 #define SLEEP_TIME_SEC 20 // should be 3600 (1h)
 
+// The size of the flash sector we want to use to store samples (do not modify).
 #define SECTOR_SIZE 4096u
 
 // Web Server data, in our sample we use Dweet.io.
@@ -31,7 +32,7 @@ WiFiClient client;
 flashMemory_t *PtrFlashMemory = NULL;
 
 uint32_t crc32b = 0;
-uint16_t tmp = 0;
+uint16_t currentIndex = 0;
 uint8_t crc8b = 0;
 
 void setup() {
@@ -104,25 +105,25 @@ void setup() {
   }
 
   // Initialize EEPROM and pointer
-  Serial.println("Data struct to EEPROM test program");
+  Serial.println("Initializing EEPROM...");
   EEPROM.begin(SECTOR_SIZE);
-  
+
   PtrFlashMemory = (flashMemory_t *)EEPROM.getDataPtr(); // Assigning pointer address to flash memory block dumped in RAM
   Serial.println("Memory assignement successful!");
-  
+
   // Calculate checksum and validate memory area
+  // TODO: use 32bit crc  
   crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
-  crc8b = EEPROM.read(SECTOR_SIZE-1); // Read crc at the end of sector
-  Serial.println("Calculated CRC32=" + String(crc32b&0xff) + " readed=" + String(crc8b));
-  
-  if(((uint8_t)crc32b&0xff) == crc8b) 
+  crc8b = EEPROM.read(SECTOR_SIZE - 1); // Read crc at the end of sector
+  Serial.println("CRC32 calculated=" + String(crc32b & 0xff) + " readed=" + String(crc8b));
+
+  if (((uint8_t)crc32b & 0xff) == crc8b)
     Serial.println("CRC32 pass!");
   else
   {
-    Serial.println("CRC32 fail! I clean memory!");
+    Serial.println("CRC32 fail! Cleaning memory...");
     cleanMemory();
   }
-  
 }
 
 void loop() {
@@ -131,68 +132,65 @@ void loop() {
   agrumino.turnBoardOn();
   agrumino.turnLedOn();
 
-  // index is the last memorized struct of sensor data
-  tmp = PtrFlashMemory->Fields.index;
-  if(tmp > N_SAMPLES-1) { // Circular buffer behaviour
-    tmp = 0;
-    PtrFlashMemory->Fields.index = tmp;
+  // Variable currentIndex is the last memorized struct of sensor data
+  currentIndex = PtrFlashMemory->Fields.index;
+  if (currentIndex > N_SAMPLES - 1) { // Circular buffer behaviour
+    currentIndex = 0;
+    PtrFlashMemory->Fields.index = currentIndex;
   }
 
+  Serial.println("*****   CURRENT INDEX IS:  " + String(currentIndex));
 
-    Serial.println("*****   CURRENT INDEX IS:  " + String(tmp));
+  // Copy sensors data to struct 
+  PtrFlashMemory->Fields.data.vector[currentIndex].temp = agrumino.readTempC();
+  PtrFlashMemory->Fields.data.vector[currentIndex].soil = agrumino.readSoil();
+  PtrFlashMemory->Fields.data.vector[currentIndex].lux = agrumino.readLux();
+  PtrFlashMemory->Fields.data.vector[currentIndex].batt = agrumino.readBatteryVoltage();
+  PtrFlashMemory->Fields.data.vector[currentIndex].battLevel = agrumino.readBatteryLevel();
+  PtrFlashMemory->Fields.data.vector[currentIndex].usb = agrumino.isAttachedToUSB();
+  PtrFlashMemory->Fields.data.vector[currentIndex].charge = agrumino.isBatteryCharging();
 
-    PtrFlashMemory->Fields.data.vector[tmp].temp = agrumino.readTempC();
-    PtrFlashMemory->Fields.data.vector[tmp].soil = agrumino.readSoil();
-    PtrFlashMemory->Fields.data.vector[tmp].lux = agrumino.readLux();
-    PtrFlashMemory->Fields.data.vector[tmp].batt = agrumino.readBatteryVoltage();
-    PtrFlashMemory->Fields.data.vector[tmp].battLevel = agrumino.readBatteryLevel();
-    PtrFlashMemory->Fields.data.vector[tmp].usb = agrumino.isAttachedToUSB();
-    PtrFlashMemory->Fields.data.vector[tmp].charge = agrumino.isBatteryCharging();
+  PtrFlashMemory->Fields.index++; // Increment index
 
-    PtrFlashMemory->Fields.index++; // Increment index
+  Serial.println("temperature:       " + String(PtrFlashMemory->Fields.data.vector[currentIndex].temp) + "°C");
+  Serial.println("soilMoisture:      " + String(PtrFlashMemory->Fields.data.vector[currentIndex].soil) + "%");
+  Serial.println("illuminance :      " + String(PtrFlashMemory->Fields.data.vector[currentIndex].lux) + " lux");
+  Serial.println("batteryVoltage :   " + String(PtrFlashMemory->Fields.data.vector[currentIndex].batt) + " V");
+  Serial.println("batteryLevel :     " + String(PtrFlashMemory->Fields.data.vector[currentIndex].battLevel) + "%");
+  Serial.println("isAttachedToUSB:   " + String(PtrFlashMemory->Fields.data.vector[currentIndex].usb));
+  Serial.println("isBatteryCharging: " + String(PtrFlashMemory->Fields.data.vector[currentIndex].charge));
+  Serial.println();
 
-    Serial.println("temperature:       " + String(PtrFlashMemory->Fields.data.vector[tmp].temp) + "°C");
-    Serial.println("soilMoisture:      " + String(PtrFlashMemory->Fields.data.vector[tmp].soil) + "%");
-    Serial.println("illuminance :      " + String(PtrFlashMemory->Fields.data.vector[tmp].lux) + " lux");
-    Serial.println("batteryVoltage :   " + String(PtrFlashMemory->Fields.data.vector[tmp].batt) + " V");
-    Serial.println("batteryLevel :     " + String(PtrFlashMemory->Fields.data.vector[tmp].battLevel) + "%");
-    Serial.println("isAttachedToUSB:   " + String(PtrFlashMemory->Fields.data.vector[tmp].usb));
-    Serial.println("isBatteryCharging: " + String(PtrFlashMemory->Fields.data.vector[tmp].charge));
-    Serial.println(); 
-
-  
   // Calculate checksum
   crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
-  crc8b = (uint8_t)crc32b&0xff;
-  Serial.println("Setting CRC32=" + String(crc8b));
-  EEPROM.write(SECTOR_SIZE-1, crc8b); // Put crc at the end of sector
-  
-  // Commit sensor data at current index
+  crc8b = (uint8_t)crc32b & 0xff;
+  Serial.println("New CRC32=" + String(crc8b));
+  EEPROM.write(SECTOR_SIZE - 1, crc8b); // Put crc at the end of sector
+
+  // With EEPROM.commit() we write all our data from RAM
+  // to flash in one block. Actually the entire sector is written (#SECTOR_SIZE bytes).
+  // Byte-level access to ESP's flash is not possible with this flash chip.
   if (EEPROM.commit()) {
     Serial.println("EEPROM successfully committed");
   } else {
     Serial.println("ERROR! EEPROM commit failed");
-  }  
-
-  
-  if(tmp == N_SAMPLES - 1) {
-      // Change this if you whant to change your thing name
-      // We use the chip Id to avoid name clashing
-      String dweetThingName = "Agrumino-" + getChipId();
-      
-      Serial.println("Now I'm sending " + String(N_SAMPLES) + " json(s) to Dweet");
-      for (uint8_t i = 0; i < N_SAMPLES; i++) {
-        // Send data to our web service
-        sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp, PtrFlashMemory->Fields.data.vector[i].soil, PtrFlashMemory->Fields.data.vector[i].lux, PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge);
-        delay(5000);
-      }  
-      // I sent all data so I can clean my memory
-      cleanMemory();
   }
 
+  // We have the queue full, we need to consume data and send to cloud.
+  // Variable currentIndex will be resetted @next loop.
+  if (currentIndex == N_SAMPLES) {
+    // Change this if you whant to change your thing name
+    // We use the chip Id to avoid name clashing
+    String dweetThingName = "Agrumino-" + getChipId();
 
+    Serial.println("Now I'm sending " + String(N_SAMPLES) + " json(s) to Dweet");
+    for (uint8_t i = 0; i < N_SAMPLES; i++) {
+      // Send data to our web service
+      sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp, PtrFlashMemory->Fields.data.vector[i].soil, PtrFlashMemory->Fields.data.vector[i].lux, PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge);
+      delay(5000);
+    }
+  }
 
-  
   // Blink when the business is done for giving an Ack to the user
   blinkLed(200, 2);
 
@@ -278,10 +276,9 @@ String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, un
 
   String jsonPostString;
   jsonPost.printTo(jsonPostString);
-  
+
   return jsonPostString;
 }
-
 
 /////////////////////
 // Utility methods //
@@ -333,13 +330,13 @@ boolean checkIfResetWiFiSettings(boolean checkBattery) {
   return success;
 }
 
-
-
+// Function to calculate CRC32
+// TODO: verify support for hardware CRC32 in bsp, eventually
+// copy implementation from official Espressif's SDK if present.
 uint32_t calculateCRC32(const uint8_t *data, size_t length) {
   uint32_t crc = 0xffffffff;
   int i;
-  Serial.println("length=" + String(length));
-  for(i=0;i<length;i++)
+  for (i = 0; i < length; i++)
   {
     uint8_t c = data[i];
     for (uint32_t i = 0x80; i > 0; i >>= 1) {
@@ -356,8 +353,10 @@ uint32_t calculateCRC32(const uint8_t *data, size_t length) {
   return crc;
 }
 
+// This function initilizes content of
+// the data struct in RAM
 void cleanMemory() {
-  Serial.println("RAM memory manual initialization");
+  Serial.println("RAM memory data struct initialization");
   PtrFlashMemory->Fields.index = 0;
   for (uint8_t i = 0; i < N_SAMPLES; i++) {
     PtrFlashMemory->Fields.data.vector[i].temp = 0.0f;
