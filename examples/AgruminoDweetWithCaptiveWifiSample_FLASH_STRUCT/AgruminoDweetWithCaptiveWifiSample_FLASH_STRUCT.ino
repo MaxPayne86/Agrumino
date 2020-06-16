@@ -12,7 +12,7 @@
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 
 // Time to sleep in second between the readings/data sending
-#define SLEEP_TIME_SEC 20 // shoud be 3600 (1h)
+#define SLEEP_TIME_SEC 20 // should be 3600 (1h)
 
 #define SECTOR_SIZE 4096u
 
