@@ -88,6 +88,18 @@ void parse_serial(void) {
     inByte = Serial.read();
     switch (inByte)
     {
+      case 'h':
+        Serial.println("\n\n**************HELP*************************");
+        Serial.println("Enter 'i' to initialize memory");
+        Serial.println("Enter '+' or '-' to increment or decrement the index of structure sensor data");
+        Serial.println("Enter 'a' to add a data collection of sensors at the current index");
+        Serial.println("Enter 'r' to read from flash data collection of sensors at the current index");
+        Serial.println("Enter 'c' to commit: store data from temporary RAM to FLASH");
+        Serial.println("Enter 'v' to verify checksum memory");
+        Serial.println("Enter 'd' to make dump of whole memory sector");
+        Serial.println("Enter 's' to enter deepSpleep modality");
+        Serial.println("Enter 'p' to place space from an action to another");
+        break;
       case 'i':
         // Memory initialization
         // Same of doing memset(PtrFlashMemory->Bytes, 0, sizeof(Fields_t)) ?
