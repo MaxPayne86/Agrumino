@@ -67,6 +67,7 @@ void setup() {
   Serial.println("Enter 'd' to make dump of whole memory sector");
   Serial.println("Enter 's' to enter deepSpleep modality");
   Serial.println("Enter 'p' to place space from an action to another");
+  Serial.println("Enter 'h' to print this menu");
 }
 
 void loop() {
@@ -98,7 +99,7 @@ void parse_serial(void) {
         Serial.println("Enter 'v' to verify checksum memory");
         Serial.println("Enter 'd' to make dump of whole memory sector");
         Serial.println("Enter 's' to enter deepSpleep modality");
-        Serial.println("Enter 'p' to place space from an action to another");
+        Serial.println("Enter 'p' to place space from an action to another\n\n");
         break;
       case 'i':
         // Memory initialization
