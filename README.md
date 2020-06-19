@@ -1,17 +1,5 @@
 # Agrumino lemon library
 
-_Corsivo_
-
-**Grassetto**
-
-1. Uno
-2. Due
-
-* voce 1
-  1. Sub 1
-  2. Sub 2
-* voce 2
-
 Download Agrumino lib from [link1](https://drive.google.com/open?id=1on5ZwjzqYb_pVMqRCJAwRULhbYAZVMmM)
 
 Follow instruction to install it at [link2](https://docs.google.com/document/d/1Dci24DAKnK0GN-E6B-5Q2Savg8v_qfiuaXvhIAeXK74/edit#)
