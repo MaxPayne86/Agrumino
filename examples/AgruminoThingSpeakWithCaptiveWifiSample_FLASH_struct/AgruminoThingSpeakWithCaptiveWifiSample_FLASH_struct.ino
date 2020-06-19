@@ -1,6 +1,12 @@
 /*
   AgruminoThingSpeakWithCaptiveWifixxx.ino
   Created by Paolo Paolucci on May 2018.
+  Modified June 2020 by:
+  Massimo Pennazio massimo.pennazio@abinsula.com
+  Martina Mascia martina.mascia@abinsula.com
+  Ricardo Medda ricardo.medda@abinsula.com
+
+  @see Agrumino.h for the documentation of the lib
 */
 
 #include "Agrumino.h"           // Our super cool lib ;)
