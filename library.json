@@ -1,0 +1,50 @@
+{
+    "name": "Agrumino",
+    "keywords": "wifi,wi-fi,esp,esp8266,esp32,espressif8266,espressif32,nodemcu,wemos,arduino,agrumino",
+    "description": "Official library for Agrumino boards",
+    "url": "https://github.com/MaxPayne86/Agrumino.git",
+    "downloadUrl": "https://github.com/MaxPayne86/Agrumino/archive/0.2.zip",
+    "authors":
+    [
+        {
+            "name": "Giuseppe Broccia",
+            "url": "giuseppe.broccia@lifely.cc"
+        },
+        {
+            "name": "Paolo Paulucci",
+            "url": "p.paolucci@tiscali.it"
+        },
+        {
+            "name": "Paolo Porcu",
+            "url": "paolo.porcu@bithiatec.com"
+        },
+        {
+            "name": "Simone Balloccu",
+            "url": "balloccu.simone@gmail.com"
+        },
+        {
+            "name": "Massimo Pennazio",
+            "url": "maxipenna@libero.it"
+        },
+        {
+            "name": "Martina Mascia",
+            "url": "martina.mascia@abinsula.com"
+        },
+        {
+            "name": "Ricardo Medda",
+            "url": "ricardo.medda@abinsula.com"
+        }
+    ],
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/MaxPayne86/Agrumino.git"
+    },
+    "frameworks": "arduino",
+    "platforms": 
+    [
+        "espressif8266",
+        "espressif32"
+    ],
+    "version": "0.2"
+}
