@@ -29,6 +29,7 @@ typedef struct
   uint16_t battLevel;
   boolean usb;
   boolean charge;
+  unsigned long seconds;
 }SensorData_t;
 
 typedef struct
