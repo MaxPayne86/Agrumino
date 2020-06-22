@@ -44,7 +44,7 @@ Further informations at: https://github.com/tzapu/WiFiManager
 ###Thing Speak Sketch with JSON POST every 4 sample
 
 In order to get the data and time of each collect of sensor data, it is necessary to download a new library for Arduino: 
-- NTPClient [link](https://github.com/taranais/NTPClient )
+- NTPClient library forked by Taranais[link](https://github.com/taranais/NTPClient )
 
 
 
