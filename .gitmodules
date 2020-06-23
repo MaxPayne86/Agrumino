@@ -6,9 +6,3 @@
 	path = libraries/PCA9536
 	url = https://github.com/MaxPayne86/PCA9536
     branch = devel
-[submodule "libraries/WiFiManager"]
-	path = libraries/WiFiManager
-	url = https://github.com/tzapu/WiFiManager
-[submodule "libraries/ArduinoJson"]
-	path = libraries/ArduinoJson
-	url = https://github.com/bblanchon/ArduinoJson
