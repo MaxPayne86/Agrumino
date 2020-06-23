@@ -1,0 +1,18 @@
+[submodule "libraries/MCP3221"]
+    path = libraries/MCP3221
+    url = https://github.com/MaxPayne86/MCP3221.git
+    branch = devel
+[submodule "libraries/MCP9800"]
+    path = libraries/MCP9800
+    url = https://github.com/JChristensen/MCP9800.git
+    branch = master
+[submodule "libraries/PCA9536"]
+    path = libraries/PCA9536
+    url = https://github.com/MaxPayne86/PCA9536.git
+    branch = devel
+[submodule "libraries/WiFiManager"]
+	path = libraries/WiFiManager
+	url = https://github.com/tzapu/WiFiManager.git
+[submodule "libraries/ArduinoJson"]
+	path = libraries/ArduinoJson
+	url = https://github.com/bblanchon/ArduinoJson.git
