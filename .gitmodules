@@ -6,3 +6,6 @@
 	path = libraries/PCA9536
 	url = https://github.com/MaxPayne86/PCA9536
     branch = devel
+[submodule "libraries/MCP9800"]
+	path = libraries/MCP9800
+	url = https://github.com/akupila/Arduino-MCP9800.git
