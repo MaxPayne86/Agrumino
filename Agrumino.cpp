@@ -273,7 +273,7 @@ void Agrumino::initGPIOExpander() {
 
 void Agrumino::initTempSensor() {
   Serial.print("initTempSensor   → ");
-  boolean success = mcpTempSensor.init(true);
+  boolean success = mcpTempSensor.init();
   if (success) {
     mcpTempSensor.setResolution(MCP_ADC_RES_11); // 11bit (0.125c)
     mcpTempSensor.setOneShot(true);
