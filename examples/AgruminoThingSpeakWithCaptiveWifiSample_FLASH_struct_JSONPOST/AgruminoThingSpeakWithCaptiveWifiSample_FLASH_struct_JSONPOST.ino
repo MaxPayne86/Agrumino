@@ -152,7 +152,6 @@ void loop() {
   PtrFlashMemory->Fields.data.vector[currentIndex].battLevel = agrumino.readBatteryLevel();
   PtrFlashMemory->Fields.data.vector[currentIndex].usb = agrumino.isAttachedToUSB();
   PtrFlashMemory->Fields.data.vector[currentIndex].charge = agrumino.isBatteryCharging();
-  PtrFlashMemory->Fields.data.vector[currentIndex].seconds = timeClient.getEpochTime();
 
   PtrFlashMemory->Fields.index++; // Increment index
 
@@ -163,7 +162,6 @@ void loop() {
   Serial.println("batteryLevel :     " + String(PtrFlashMemory->Fields.data.vector[currentIndex].battLevel) + "%");
   Serial.println("isAttachedToUSB:   " + String(PtrFlashMemory->Fields.data.vector[currentIndex].usb));
   Serial.println("isBatteryCharging: " + String(PtrFlashMemory->Fields.data.vector[currentIndex].charge));
-  Serial.println("Data and time in seconds from midnight 1/1/1970: " + String(PtrFlashMemory->Fields.data.vector[currentIndex].seconds));
   Serial.println();
 
   // Calculate checksum
@@ -186,10 +184,11 @@ void loop() {
   if (currentIndex == N_SAMPLES - 1) {
     String bodyJsonString = "";
     Serial.println("Now I'm sending " + String(N_SAMPLES) + " json(s) to Dweet");
-
+    unsigned long secondsNTP = timeClient.getEpochTime();
     // put data in the same order you configured your ThingSpeak dashboard (temp-soil-lux-batt-battLevel-usb-charge)
     for (uint8_t i = 0; i < N_SAMPLES; i++) {
-      String tmp = getSendDataBodyJsonString(PtrFlashMemory->Fields.data.vector[i].temp,  PtrFlashMemory->Fields.data.vector[i].soil,  PtrFlashMemory->Fields.data.vector[i].lux,  PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge, PtrFlashMemory->Fields.data.vector[i].seconds);
+      unsigned long seconds = secondsNTP - (SLEEP_TIME_SEC*((N_SAMPLES-1)-i));
+      String tmp = getSendDataBodyJsonString(PtrFlashMemory->Fields.data.vector[i].temp,  PtrFlashMemory->Fields.data.vector[i].soil,  PtrFlashMemory->Fields.data.vector[i].lux,  PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge, seconds);
       bodyJsonString = bodyJsonString + tmp + String(",");
     }
     HTTPPostJSON(bodyJsonString);
@@ -296,7 +295,6 @@ void cleanMemory() {
     PtrFlashMemory->Fields.data.vector[i].battLevel = 0u;
     PtrFlashMemory->Fields.data.vector[i].usb = false;
     PtrFlashMemory->Fields.data.vector[i].charge = false;
-    PtrFlashMemory->Fields.data.vector[i].seconds = 0u;
   }
 }
 
@@ -411,7 +409,7 @@ String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, un
 
 //function to evaluate the Thing Speak formatted string for data and time
 String getFormattedDateThingSpeak(unsigned long secs) {
-  //unsigned long rawTime = (secs ? secs : this->getEpochTime()) / 86400L;  // in days
+  //unsigned long rawTime = (secs ? secs : timeClient->getEpochTime()) / 86400L;  // in days
   unsigned long rawTime = secs / 86400L;  // in days
   unsigned long days = 0, year = 1970;
   uint8_t month;
