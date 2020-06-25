@@ -153,9 +153,12 @@ void loop() {
 
   if ((WiFiMulti.run() == WL_CONNECTED)) {
 
-    String vers = remoteBinVersion();
-    Serial.println("Remote version: " + vers);
-    Serial.println("equals?: " + String(checkVersion()));
+    String remoteVersion = remoteBinVersion();
+    bool equalVersions = false;
+    remoteVersion.replace("\n","");
+    equalVersions = remoteVersion == currentVersion;
+    Serial.println("Remote version: " + remoteVersion);
+    Serial.println("equals?: " + String(equalVersions));
     
 
     // The line below is optional. It can be used to blink the LED on the board during flashing
@@ -164,16 +167,17 @@ void loop() {
     // On a good connection the LED should flash regularly. On a bad connection the LED will be
     // on much longer than it will be off. Other pins than LED_BUILTIN may be used. The second
     // value is used to put the LED on. If the LED is on with HIGH, that value should be passed
-    ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+    //ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
 
     // Add optional callback notifiers
     ESPhttpUpdate.onStart(update_started);
     ESPhttpUpdate.onEnd(update_finished);
     ESPhttpUpdate.onProgress(update_progress);
     ESPhttpUpdate.onError(update_error);
+    
+    ESPhttpUpdate.rebootOnUpdate(false);
 
-
-    if(checkVersion()) {
+    if(equalVersions) {
       Serial.println("\nNothing has changed.....We don't need to update our firmware...........\n");
     } else {
         Serial.println("\nOops, something has changed. Maybe we should update the firmware!!!!\n");
@@ -208,6 +212,9 @@ void loop() {
   }
 
   Serial.println("*****   CURRENT INDEX IS:  " + String(currentIndex));
+  agrumino.turnBoardOn();
+  Serial.println("*****   AAAAAAAAAAARGHHHHH  ");  
+  Serial.println("*****   CURRENT TEMP IS:  " + String(agrumino.readTempC()));
 
   // Copy sensors data to struct
   PtrFlashMemory->Fields.data.vector[currentIndex].temp = agrumino.readTempC();
@@ -460,12 +467,6 @@ String remoteBinVersion() {
     http.end(); //Free the resources 
 
     return payload;
-}
-
-bool checkVersion() {
-  String remoteVersion = remoteBinVersion();
-  remoteVersion.replace("\n","");
-  return currentVersion == remoteVersion;
 }
 
 void update_started() {
