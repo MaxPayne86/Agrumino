@@ -18,15 +18,16 @@
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 
 #include <ESP8266WiFiMulti.h>
-#include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
-#include <HttpClient.h>
 
-#define VERSION_SERVER_URL "http://www.SERVERNAMEHERE.com/agruminoupdates/vers.txt"
-#define BIN_SERVER_URL "http://www.SERVERNAMEHERE.com/agruminoupdates/"
+#define VERSION_SERVER_URL "http://SERVERNAMEHERE/agruminoupdates/vers.txt"     // this remote file stores the current version of the binary in the server
+#define BIN_SERVER_URL "http://SERVERNAMEHERE/agruminoupdates/"                 // this is the url of the remote folder containing the binary and the version files
 ESP8266WiFiMulti WiFiMulti;
-String currentVersion = "1";
+String currentVersion = "1";                                                    // this is the version of the sketch. If you update this sketch, please update this value and the file vers.txt defined in VERSION_SERVER_URL
 String readStringServer = "";
+bool errorReadingStringServer = false;                                          // this flag becomes true if there are some problem reading the vers.txt file defined in VERSION_SERVER_URL  
+
+HTTPClient http;
 
 // Time to sleep in second between the readings/data sending
 #define SLEEP_TIME_SEC 3600 // [Seconds]
@@ -42,7 +43,6 @@ const String WEB_SERVER_API_SEND_DATA = "/dweet/quietly/for/"; // The Dweet name
 Agrumino agrumino;
 
 // Used for sending Json POST requests
-//StaticJsonBuffer<200 * N_SAMPLES> jsonBuffer;
 StaticJsonBuffer<200> jsonBuffer;
 
 // Used to create TCP connections and make Http calls
@@ -151,15 +151,23 @@ void loop() {
   agrumino.turnBoardOn();
   agrumino.turnLedOn();
 
+  // here we check the version of the remote binary file. If it has changed, the sketch will be updated automatically.
   if ((WiFiMulti.run() == WL_CONNECTED)) {
 
     String remoteVersion = remoteBinVersion();
     bool equalVersions = false;
-    remoteVersion.replace("\n","");
-    equalVersions = remoteVersion == currentVersion;
+    remoteVersion.replace("\n", "");
+    Serial.println("Error in reading server (should be false): " + String(errorReadingStringServer));
+    if (errorReadingStringServer) {
+      Serial.println("Oops, something went wrong! Error in reading version from server....");
+      equalVersions = true;
+    } else {
+      equalVersions = remoteVersion == currentVersion;
+    }
+
     Serial.println("Remote version: " + remoteVersion);
     Serial.println("equals?: " + String(equalVersions));
-    
+
 
     // The line below is optional. It can be used to blink the LED on the board during flashing
     // The LED will be on during download of one buffer of data from the network. The LED will
@@ -174,30 +182,33 @@ void loop() {
     ESPhttpUpdate.onEnd(update_finished);
     ESPhttpUpdate.onProgress(update_progress);
     ESPhttpUpdate.onError(update_error);
-    
+
+    // we reboot the board only after the deepsleep
     ESPhttpUpdate.rebootOnUpdate(false);
 
-    if(equalVersions) {
-      Serial.println("\nNothing has changed.....We don't need to update our firmware...........\n");
+    if (equalVersions) {
+      if (!errorReadingStringServer) {
+        Serial.println("\nNothing has changed.....We don't need to update our firmware...........\n");
+      }
     } else {
-        Serial.println("\nOops, something has changed. Maybe we should update the firmware!!!!\n");
-        t_httpUpdate_return ret = ESPhttpUpdate.update(client, String(BIN_SERVER_URL) + "AgruminoDweetWithCaptiveWifiSample_FLASH_STRUCT_OTA_HTTP.ino.bin");
-        // Or:
-        //t_httpUpdate_return ret = ESPhttpUpdate.update(client, "servername.com", 80, "agruminoupdates/AgruminoDweetWithCaptiveWifiSample_FLASH_STRUCT_OTA_HTTP.ino.bin");
-    
-        switch (ret) {
-          case HTTP_UPDATE_FAILED:
-            Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-            break;
-    
-          case HTTP_UPDATE_NO_UPDATES:
-            Serial.println("HTTP_UPDATE_NO_UPDATES");
-            break;
-    
-          case HTTP_UPDATE_OK:
-            Serial.println("HTTP_UPDATE_OK");
-            break;
-        }      
+      Serial.println("\nOops, something has changed. Maybe we should update the firmware!!!!\n");
+      t_httpUpdate_return ret = ESPhttpUpdate.update(client, String(BIN_SERVER_URL) + "AgruminoDweetWithCaptiveWifiSample_FLASH_STRUCT_OTA_HTTP.ino.bin");
+      // Or:
+      //t_httpUpdate_return ret = ESPhttpUpdate.update(client, "servername.com", 80, "agruminoupdates/AgruminoDweetWithCaptiveWifiSample_FLASH_STRUCT_OTA_HTTP.ino.bin");
+
+      switch (ret) {
+        case HTTP_UPDATE_FAILED:
+          Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+          break;
+
+        case HTTP_UPDATE_NO_UPDATES:
+          Serial.println("HTTP_UPDATE_NO_UPDATES");
+          break;
+
+        case HTTP_UPDATE_OK:
+          Serial.println("HTTP_UPDATE_OK");
+          break;
+      }
     }
 
     delay(2000);
@@ -212,9 +223,6 @@ void loop() {
   }
 
   Serial.println("*****   CURRENT INDEX IS:  " + String(currentIndex));
-  agrumino.turnBoardOn();
-  Serial.println("*****   AAAAAAAAAAARGHHHHH  ");  
-  Serial.println("*****   CURRENT TEMP IS:  " + String(agrumino.readTempC()));
 
   // Copy sensors data to struct
   PtrFlashMemory->Fields.data.vector[currentIndex].temp = agrumino.readTempC();
@@ -445,28 +453,40 @@ void cleanMemory() {
   }
 }
 
+// this function reads the remote file vers.txt defined in VERSION_SERVER_URL and containing the current version of the binary file
 String remoteBinVersion() {
-    HTTPClient http;
+  String payload = "";
 
-    String payload = "";
- 
-    http.begin(VERSION_SERVER_URL); //Specify the URL
-    int httpCode = http.GET();                                        //Make the request
- 
-    if (httpCode > 0) { //Check for the returning code
- 
+  http.begin(VERSION_SERVER_URL); //Specify the URL
+  int httpCode = http.GET();                                        //Make the request
+
+  if (httpCode > 0) { //Check for the returning code
+    switch (httpCode) {
+      case 200:
+        Serial.println("Page found: code 200");
         payload = http.getString();
-//        Serial.println(httpCode);
-//        Serial.println(payload);
         Serial.println("Successful HTTP request for bin version");
-    } 
-    else {
-      Serial.println("Error on HTTP request for bin version");
+        break;
+      case 404:
+        Serial.println("Page not found: code 404");
+        payload = "0";
+        errorReadingStringServer = true;
+        break;
+      default:
+        Serial.println("Other error: code " + String(httpCode));
+        payload = "0";
+        errorReadingStringServer = true;
+        break;
     }
- 
-    http.end(); //Free the resources 
+  }
+  else {
+    errorReadingStringServer = true;                                // flag for error in http request for binary version
+    Serial.println("Error on HTTP request for bin version");
+  }
 
-    return payload;
+  http.end(); //Free the resources
+  payload.replace("\n", "");
+  return payload;
 }
 
 void update_started() {
