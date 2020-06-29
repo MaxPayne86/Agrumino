@@ -16,7 +16,10 @@ Here is an example of the command line the Arduino IDE runs to upload the sketch
 ```
 
 where 192.168.1.7 is the IP address assigned from wifi network to the board and 8266 is the port
+
 * Web Browser  updates are done with a web browser
+Install AsyncElegantOTA library
+
 * HTTP Server  checks for updates and download a binary file from HTTP web server. It is possible to download updates from every IP or domain address.
 
 ### Update process

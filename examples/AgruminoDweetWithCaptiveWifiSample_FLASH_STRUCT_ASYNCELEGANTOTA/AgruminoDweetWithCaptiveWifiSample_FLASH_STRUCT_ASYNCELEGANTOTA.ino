@@ -17,20 +17,18 @@
 //#include <WiFiManager.h>        // https://github.com/tzapu/WiFiManager
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 
-
-//  AsyncElegantOTA  INIZIO
-#include <ESPAsyncWiFiManager.h> 
+//  ***start AsyncElegantOTA 
+#include <ESPAsyncWiFiManager.h>  //https://github.com/alanswx/ESPAsyncWiFiManager
 #include <Hash.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
-#include <AsyncElegantOTA.h>
+#include <ESPAsyncTCP.h>          //https://github.com/me-no-dev/ESPAsyncTCP
+#include <ESPAsyncWebServer.h>    //https://github.com/me-no-dev/ESPAsyncWebServer
+#include <AsyncElegantOTA.h>      //installed from Manages Libraries
 
 AsyncWebServer server(80);
 DNSServer dns;
 
 #include <ESP8266mDNS.h>;
-
-//  AsyncElegantOTA  FINE
+//  ***end AsyncElegantOTA
 
 String myLocalIP = "";
 String deviceNameMDNS = "";
