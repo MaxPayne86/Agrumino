@@ -112,7 +112,7 @@ void Agrumino::turnBoardOn() {
     checkBattery();
   }
   else {
-    Serial.print("Toggling board off/on...");
+    Serial.println("Toggling board off/on...");
     digitalWrite(PIN_MOSFET, LOW);
     delay(5);
     digitalWrite(PIN_MOSFET, HIGH);
