@@ -105,7 +105,7 @@ boolean Agrumino::isBoardOn() {
 
 void Agrumino::turnBoardOn() {
   if (!isBoardOn()) {
-    Serial.print("Turning board on...");
+    Serial.println("Turning board on...");
     digitalWrite(PIN_MOSFET, HIGH);
     delay(5); // Ensure that the ICs are booted up properly
     initBoard();
