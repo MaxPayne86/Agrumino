@@ -25,8 +25,7 @@
 #define TENSIONE 4
 #define LIVELLOBATT 5
 #define THING_SPEAK_ADDRESS "api.thingspeak.com"
-// String writeAPIKey="XXXXXXXXXXXXXXXX";             // Change this to your channel Write API key.
-String writeAPIKey="ZH8H855C2F0VQW6X";
+String writeAPIKey="XXXXXXXXXXXXXXXX";             // Change this to your channel Write API key.
 #define TIMEOUT  5000                              // Timeout for server response.
 
 // Our super cool lib
