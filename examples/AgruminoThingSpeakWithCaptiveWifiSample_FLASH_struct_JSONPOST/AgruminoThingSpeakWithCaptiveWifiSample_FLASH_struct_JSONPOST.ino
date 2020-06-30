@@ -195,8 +195,7 @@ void loop() {
       String tmp = getSendDataBodyJsonString(PtrFlashMemory->Fields.data.vector[i].temp,  PtrFlashMemory->Fields.data.vector[i].soil,  PtrFlashMemory->Fields.data.vector[i].lux,  PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge, seconds);
       bodyJsonString = bodyJsonString + tmp + String(",");
     }
-    JSONPost(bodyJsonString);
-    delay(15000); //delay between two POST on Thing Speak as free user
+    JSONPost(bodyJsonString); 
   }
 
 
@@ -412,5 +411,5 @@ String getFormattedDateThingSpeak(unsigned long secs) {
   }
   String monthStr = ++month < 10 ? "0" + String(month) : String(month); // jan is month 1
   String dayStr = ++rawTime < 10 ? "0" + String(rawTime) : String(rawTime); // day of month
-  return String(year) + "-" + monthStr + "-" + dayStr + " " + timeClient.getFormattedTime(secs ? secs : 0) + " -0500";
+  return String(year) + "-" + monthStr + "-" + dayStr + " " + timeClient.getFormattedTime(secs ? secs : 0) + " +0200";
 }
