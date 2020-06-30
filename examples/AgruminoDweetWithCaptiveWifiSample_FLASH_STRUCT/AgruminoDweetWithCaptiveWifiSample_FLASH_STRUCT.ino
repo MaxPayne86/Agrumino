@@ -31,8 +31,7 @@ const String WEB_SERVER_API_SEND_DATA = "/dweet/quietly/for/"; // The Dweet name
 Agrumino agrumino;
 
 // Used for sending Json POST requests
-//StaticJsonBuffer<200 * N_SAMPLES> jsonBuffer;
-StaticJsonBuffer<200> jsonBuffer;
+DynamicJsonDocument doc(200);
 
 // Used to create TCP connections and make Http calls
 WiFiClient client;
@@ -273,8 +272,11 @@ void sendData(String dweetName, float temp, int soil, float lux, float batt, uns
 
 // Returns the Json body that will be sent to the send data HTTP POST API
 String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge) {
-  jsonBuffer.clear();
-  JsonObject& jsonPost = jsonBuffer.createObject();
+  
+  String input = "{}";
+  deserializeJson(doc, input); //resets the document
+  JsonObject jsonPost = doc.as<JsonObject>();
+  
   jsonPost["temp"] = String(temp);
   jsonPost["soil"] = String(soil);
   jsonPost["lux"]  = String(lux);
@@ -284,8 +286,8 @@ String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, un
   jsonPost["usbConnected"]  = String(usb);
 
   String jsonPostString;
-  jsonPost.printTo(jsonPostString);
-
+  serializeJson(doc, jsonPostString); //create a minified JSON document
+  
   return jsonPostString;
 }
 
