@@ -1,9 +1,17 @@
 /*
-   EEPROM Test
+   /*
+  AgruminoCaptiveWiSample.ino - Sample project for Agrumino board using the Agrumino library.
+  !!!WARNING!!! You need to program the board with option Tools->Erase Flash->All Flash Contents
 
-   Program to test EEPROM
+  Created June 2020 by:
+  Massimo Pennazio massimo.pennazio@abinsula.com
+  Martina Mascia martina.mascia@abinsula.com
+  Ricardo Medda ricardo.medda@abinsula.com
 
-   WARNING: It is recommended to initialize memory before writing and reading.
+  Program to test Agrumino board and FLASH Memory of ESP8266 Module.
+  Select option following the guide on serial monitor.
+
+  @see Agrumino.h for the documentation of the lib
 */
 
 #include <Agrumino.h>
