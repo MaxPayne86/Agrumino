@@ -6,6 +6,10 @@
   Martina Mascia martina.mascia@abinsula.com
   Ricardo Medda ricardo.medda@abinsula.com
 
+  This sketch Sketch save sensor data of Agrumino board
+  on FLASH and after 4 cycles transmits data to Thing Speak
+  with 4 different HTTP POST. 
+  
   @see Agrumino.h for the documentation of the lib
 */
 
@@ -30,14 +34,12 @@
 #define TENSIONE 4
 #define LIVELLOBATT 5
 #define THING_SPEAK_ADDRESS "api.thingspeak.com"
-String writeAPIKey = "STZU1C0WIEB8PU2N";           // Change this to your channel Write API key.
+String writeAPIKey = "XXXXXXXXXXXXXXXX";           // Change this to your channel Write API key.
 #define TIMEOUT  5000                              // Timeout for server response.
 
 // Our super cool lib
 Agrumino agrumino;
 
-// Used for sending Json POST requests
-//StaticJsonBuffer<500> jsonBuffer;
 // Used to create TCP connections and make Http calls
 WiFiClient client;
 
