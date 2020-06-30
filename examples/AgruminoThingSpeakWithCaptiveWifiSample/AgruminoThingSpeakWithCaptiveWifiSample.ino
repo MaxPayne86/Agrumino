@@ -1,6 +1,10 @@
 /*
   AgruminoThingSpeakWithCaptiveWifixxx.ino
   Created by Paolo Paolucci on May 2018.
+
+  This sketch send an HTTP POST to ThingSpeak 
+  with Sensor Data of Agrumino Board
+  every 60 second
 */
 
 #include "Agrumino.h"           // Our super cool lib ;)
@@ -11,7 +15,7 @@
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 
 // Time to sleep in second between the readings/data sending
-#define SLEEP_TIME_SEC 60
+#define SLEEP_TIME_SEC 60 //seconds
 
 // ThingSpeak information.
 #define NUM_FIELDS 5                               // To update more fields, increase this number and add a field label below.
@@ -22,13 +26,12 @@
 #define LIVELLOBATT 5
 #define THING_SPEAK_ADDRESS "api.thingspeak.com"
 // String writeAPIKey="XXXXXXXXXXXXXXXX";             // Change this to your channel Write API key.
+String writeAPIKey="ZH8H855C2F0VQW6X";
 #define TIMEOUT  5000                              // Timeout for server response.
 
 // Our super cool lib
 Agrumino agrumino;
 
-// Used for sending Json POST requests
-StaticJsonBuffer<500> jsonBuffer;
 // Used to create TCP connections and make Http calls
 WiFiClient client;
 
@@ -232,4 +235,3 @@ boolean checkIfResetWiFiSettings() {
     return false;
   }
 }
-
