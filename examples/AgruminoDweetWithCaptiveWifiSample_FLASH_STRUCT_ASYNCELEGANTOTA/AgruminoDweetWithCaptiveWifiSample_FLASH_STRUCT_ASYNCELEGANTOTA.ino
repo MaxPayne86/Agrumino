@@ -8,6 +8,13 @@
   Martina Mascia martina.mascia@abinsula.com
   Ricardo Medda ricardo.medda@abinsula.com
 
+  This sketch reads every 1h all values from the Arduino board and update them to the Dweet.io service every 4h. 
+  It integrates FLASH management to collect all data before transmit them. 
+  Moreover integrates the update of the firmware via OTA using a web page.
+  To enter UPDATE Modality you need to press RESET Button (S2) and immeditely press repetitively USER Button (S1).
+  When in UPDATE Mod led will blink faster.
+  Then copy one of the two links after sentence "My Update Page is:" on Serial Monitor and paste it on your web browser. 
+
   @see Agrumino.h for the documentation of the lib
 */
 #include "Agrumino.h"           // Our super cool lib ;)
@@ -43,18 +50,15 @@ String deviceNameMDNS = "";
 const char* WEB_SERVER_HOST = "dweet.io";
 const String WEB_SERVER_API_SEND_DATA = "/dweet/quietly/for/"; // The Dweet name is created in the loop() method.
 
-
 #define PUSH_1   4
 uint8_t push_1_lock = 0;
 uint32_t timec=0, prevtimec=0;
-
 
 // Our super cool lib
 Agrumino agrumino;
 
 // Used for sending Json POST requests
-//StaticJsonBuffer<200 * N_SAMPLES> jsonBuffer;
-StaticJsonBuffer<200> jsonBuffer;
+DynamicJsonDocument doc(200);
 
 // Used to create TCP connections and make Http calls
 WiFiClient client;
@@ -111,9 +115,9 @@ void setup() {
 
 //    WiFiManager wifiManager;
 
-//  AsyncElegantOTA  INIZIO
+//  AsyncElegantOTA  start
     AsyncWiFiManager wifiManager(&server,&dns);
-//  AsyncElegantOTA  FINE
+//  AsyncElegantOTA  end
 
     // Customize the web configuration web page
     wifiManager.setCustomHeadElement("<h1>Agrumino</h1>");
@@ -175,7 +179,7 @@ void setup() {
     Serial.println("mDNS responder started");  
   }
   
-//  AsyncElegantOTA  INIZIO
+//  AsyncElegantOTA  start
   Serial.println("Starting HTTP server.....");
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/html", "<html lang=\"en\">  <head><meta charset=\"utf-8\"> <title> The Agrumino summary page </title> </head><body><h1> Hi! I am your <i> Agrumino. </i> </h1></br>My local IP is: " + myLocalIP + "</br></br>My MDNS name is: " + deviceNameMDNS + ".local</br></br>My update page is: http://" + deviceNameMDNS + ".local/update (or http://" + myLocalIP + "/update)  </body></html>");
@@ -184,7 +188,7 @@ void setup() {
   AsyncElegantOTA.begin(&server);    // Start ElegantOTA
   server.begin();
   Serial.println("HTTP server started");
-//  AsyncElegantOTA  FINE
+//  AsyncElegantOTA  end
 
   
 
@@ -214,7 +218,7 @@ void loop() {
   Serial.println("\n#########################\n");
   Serial.println("My local IP is: " + myLocalIP);  
   Serial.println("My MDNS name is: " + deviceNameMDNS + ".local");  
-  Serial.println("My update page is: " + deviceNameMDNS + ".local/update (or " + myLocalIP + "/update)");
+  Serial.println("My update page is: http://" + deviceNameMDNS + ".local/update (or http://" + myLocalIP + "/update)");
   Serial.println("\n\n");
 
   MDNS.update();
@@ -283,14 +287,14 @@ void loop() {
       {
         push_1_lock = 1;
         // qui fa qualcosa
-        Serial.println("-------> TASTO PREMUTO");
+        Serial.println("-------> Button Pressed");
 
       }
     }
   }
   else
   {
-    Serial.println("-------> TASTO NON PREMUTO");
+    Serial.println("-------> Button not Pressed");
     //push_1_lock = 0;
   }
 
@@ -303,10 +307,6 @@ void loop() {
   } else {
     Serial.println("....................................NORMAL MODE");
   }
-
-
-
-
 
   // We have the queue full, we need to consume data and send to cloud.
   // Variable currentIndex will be resetted @next loop.
@@ -330,17 +330,10 @@ void loop() {
   // Board off before delay/sleep to save battery :)
   agrumino.turnBoardOff();
 
-
-
-
-
-
   if (!push_1_lock) {
     //delaySec(SLEEP_TIME_SEC); // The ESP8266 stays powered, executes the loop repeatedly
     agrumino.deepSleepSec(SLEEP_TIME_SEC); // ESP8266 enter in deepSleep and after the selected time starts back from setup() and then loop()   
   }
-  
-
 
 }
 
@@ -408,8 +401,11 @@ void sendData(String dweetName, float temp, int soil, float lux, float batt, uns
 
 // Returns the Json body that will be sent to the send data HTTP POST API
 String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge) {
-  jsonBuffer.clear();
-  JsonObject& jsonPost = jsonBuffer.createObject();
+    
+  String input = "{}";
+  deserializeJson(doc, input); //resets the document
+  JsonObject jsonPost = doc.as<JsonObject>();
+  
   jsonPost["temp"] = String(temp);
   jsonPost["soil"] = String(soil);
   jsonPost["lux"]  = String(lux);
@@ -419,12 +415,10 @@ String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, un
   jsonPost["usbConnected"]  = String(usb);
 
   String jsonPostString;
-  jsonPost.printTo(jsonPostString);
+  serializeJson(doc, jsonPostString); //create a minified JSON document
 
   return jsonPostString;
 }
-
-
 
 
 /////////////////////
