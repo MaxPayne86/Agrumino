@@ -6,6 +6,10 @@
   Martina Mascia martina.mascia@abinsula.com
   Ricardo Medda ricardo.medda@abinsula.com
 
+  This sketch Sketch save sensor data of Agrumino board
+  on FLASH and after 4 cycles transmits data to Thing Speak
+  with one JSON POST. 
+  
   @see Agrumino.h for the documentation of the lib
 */
 
@@ -19,7 +23,7 @@
 #include <WiFiUdp.h>
 
 // Time to sleep in second between the readings/data sending
-#define SLEEP_TIME_SEC 3600 //seconds --> 1 hour
+#define SLEEP_TIME_SEC 10 //seconds --> 1 hour
 
 // The size of the flash sector we want to use to store samples (do not modify).
 #define SECTOR_SIZE 4096u
@@ -34,7 +38,7 @@ String writeAPIKey = "YYYYYYYYYYYYYYYY";           // Change this to your channe
 Agrumino agrumino;
 
 // Used for sending Json POST requests
-StaticJsonBuffer<200 * N_SAMPLES> jsonBuffer;
+DynamicJsonDocument doc(200* N_SAMPLES);
 
 // Used to create TCP connections and make Http calls
 WiFiClient client;
@@ -183,7 +187,7 @@ void loop() {
   // Variable currentIndex will be resetted @next loop.
   if (currentIndex == N_SAMPLES - 1) {
     String bodyJsonString = "";
-    Serial.println("Now I'm sending " + String(N_SAMPLES) + " json(s) to Dweet");
+    Serial.println("Now I'm sending json to ThingSpeak");
     unsigned long secondsNTP = timeClient.getEpochTime();
     // put data in the same order you configured your ThingSpeak dashboard (temp-soil-lux-batt-battLevel-usb-charge)
     for (uint8_t i = 0; i < N_SAMPLES; i++) {
@@ -191,7 +195,8 @@ void loop() {
       String tmp = getSendDataBodyJsonString(PtrFlashMemory->Fields.data.vector[i].temp,  PtrFlashMemory->Fields.data.vector[i].soil,  PtrFlashMemory->Fields.data.vector[i].lux,  PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge, seconds);
       bodyJsonString = bodyJsonString + tmp + String(",");
     }
-    HTTPPostJSON(bodyJsonString);
+    JSONPost(bodyJsonString);
+    delay(15000); //delay between two POST on Thing Speak as free user
   }
 
 
@@ -302,43 +307,15 @@ void cleanMemory() {
 // HTTP methods //
 //////////////////
 
-int HTTPPost( int numFields , String fieldData[] ) {
-  if (client.connect( THING_SPEAK_ADDRESS , 80 )) {
-    // Build the Posting data string.
-    // If you have multiple fields, make sure the sting does not exceed 1440 characters.
-    String postData = "api_key=" + writeAPIKey ;
-    for ( int fieldNumber = 1; fieldNumber < numFields + 1 ; fieldNumber++ ) {
-      String fieldName = "field" + String( fieldNumber );
-      postData += "&" + fieldName + "=" + fieldData[ fieldNumber ];
-    }
-    // POST data via HTTP
-    Serial.println( "Connecting to ThingSpeak for update..." );
-    Serial.println();
-    client.println( "POST /update HTTP/1.1" );
-    client.println( "Host: api.thingspeak.com" );
-    client.println( "Connection: close" );
-    client.println( "Content-Type: application/x-www-form-urlencoded" );
-    client.println( "Content-Length: " + String( postData.length() ) );
-    client.println();
-    client.println( postData );
-    Serial.println( postData );
-    String answer = getResponse();
-    Serial.println( answer );
-  }
-  else
-  {
-    Serial.println ( "Connection Failed" );
-  }
-}
-
-int HTTPPostJSON(String bodyJsonString) {
+int JSONPost(String bodyJsonString) {
 
   bodyJsonString.remove(bodyJsonString.length() - 1);
-  Serial.println("Json after remove is:" +  bodyJsonString); //DEBUG
+  //Serial.println("Json after remove is:" +  bodyJsonString); //DEBUG
+  
   //JSON format for Thing Speak (see https://www.mathworks.com/help/thingspeak/bulkwritejsondata.html)
   bodyJsonString = String("{\"write_api_key\": \"") + String(writeAPIKey) + String("\",") + String("\"updates\": [") + bodyJsonString + ("]}");
 
-  // Use WiFiClient class to create TCP connections, we try until the connection is estabilished
+  // Use WiFiClient class to create TCP connections, we try until the connection is estabilished  
   while (!client.connect(THING_SPEAK_ADDRESS, 80)) {
     Serial.println("connection failed\n");
     delay(1000);
@@ -350,8 +327,8 @@ int HTTPPostJSON(String bodyJsonString) {
   Serial.println("###   --> " + ThingSpeakName + " <--  ###");
   Serial.println("###################################\n");
 
-  // Print the HTTP POST API data for debug
-  Serial.println("Requesting POST: " + String(THING_SPEAK_ADDRESS) + String("Channel ID: ") + ThingSpeakName);
+  // Print the JSON POST API data for debug
+  Serial.println("Requesting POST: " + String(THING_SPEAK_ADDRESS) + String(" Channel ID: ") + ThingSpeakName);
   Serial.println("Requesting POST: " + bodyJsonString);
 
   //client.println( "POST /update HTTP/1.1" );
@@ -359,7 +336,7 @@ int HTTPPostJSON(String bodyJsonString) {
   client.println( "Host: api.thingspeak.com" );
   client.println( "Connection: close" );
   client.println( "Content-Type: application/json" );
-  //client.println( "Content-Length: " + String( postData.length() ) );
+  client.println( "Content-Length: " + String( bodyJsonString.length() ) );
   client.println();
   client.println( bodyJsonString );
 
@@ -391,7 +368,11 @@ String getResponse() {
 // Returns the Json body that will be sent to the send data HTTP POST API
 String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge, unsigned long sec) {
   String datetime = getFormattedDateThingSpeak(sec);
-  JsonObject& jsonPost = jsonBuffer.createObject();
+
+  String input = "{}";
+  deserializeJson(doc, input); //resets the document
+  JsonObject jsonPost = doc.as<JsonObject>();
+  
   jsonPost["created_at"] = datetime;
   jsonPost["field1"] = String(temp);
   jsonPost["field2"] = String(soil);
@@ -402,7 +383,7 @@ String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, un
   jsonPost["field7"]  = String(usb);
 
   String jsonPostString;
-  jsonPost.printTo(jsonPostString);
+  serializeJson(doc, jsonPostString); //create a minified JSON document
 
   return jsonPostString;
 }
