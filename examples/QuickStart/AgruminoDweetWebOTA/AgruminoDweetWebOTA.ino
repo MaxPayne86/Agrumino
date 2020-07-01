@@ -52,7 +52,7 @@ const char *WEB_SERVER_HOST = "dweet.io";
 const String WEB_SERVER_API_SEND_DATA =
     "/dweet/quietly/for/"; // The Dweet name is created in the loop() method.
 
-uint8_t push_1_lock = 0;
+uint8_t s1_lock = 0;
 uint32_t timec = 0, prevtimec = 0;
 
 // Our super cool lib
@@ -225,9 +225,7 @@ void loop() {
 
   MDNS.update();
 
-  //  AsyncElegantOTA  INIZIO
   AsyncElegantOTA.loop();
-  //  AsyncElegantOTA  FINE
 
   agrumino.turnBoardOn();
   agrumino.turnLedOn();
@@ -301,20 +299,20 @@ void loop() {
     if (digitalRead(PIN_BTN_S1) == LOW) {
       delay(50);
       if (digitalRead(PIN_BTN_S1) == LOW) {
-        if (push_1_lock != 1) {
-          push_1_lock = 1;
+        if (s1_lock != 1) {
+          s1_lock = 1;
           Serial.println("-------> Button Pressed");
         }
       }
     } else {
       Serial.println("-------> Button not Pressed");
-      // push_1_lock = 0;
+      // s1_lock = 0;
     }
 
     prevtimec = timec;
   } // End if 1000ms tick
 
-  if (push_1_lock == 1) {
+  if (s1_lock == 1) {
     Serial.println("....................................UPDATE MODE");
   } else {
     Serial.println("....................................NORMAL MODE");
@@ -322,7 +320,7 @@ void loop() {
 
   // We have the queue full, we need to consume data and send to cloud.
   // Variable currentIndex will be resetted @next loop.
-  if ((currentIndex == N_SAMPLES - 1) && !push_1_lock) {
+  if ((currentIndex == N_SAMPLES - 1) && !s1_lock) {
     // Change this if you whant to change your thing name
     // We use the chip Id to avoid name clashing
     String dweetThingName = "Agrumino-" + getChipId();
@@ -349,7 +347,7 @@ void loop() {
   // Board off before delay/sleep to save battery :)
   agrumino.turnBoardOff();
 
-  if (!push_1_lock) {
+  if (!s1_lock) {
     // delaySec(SLEEP_TIME_SEC); // The ESP8266 stays powered, executes the loop
     // repeatedly
     agrumino.deepSleepSec(
