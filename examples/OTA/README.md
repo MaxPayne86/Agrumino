@@ -8,7 +8,9 @@ OTA may be done using:
 2. Web Browser
 3. HTTP Server
 
-* Arduino IDE  option is intended primarily for the software development phase.
+### Arduino IDE
+
+This option is intended primarily for the software development phase.
 Here is an example of the command line the Arduino IDE runs to upload the sketch on the Agrumino board:
 
 ```
@@ -17,19 +19,16 @@ Here is an example of the command line the Arduino IDE runs to upload the sketch
 
 where 192.168.1.7 is the IP address assigned from wifi network to the board and 8266 is the port
 
-* Web Browser  updates are done with a web browser
-AgruminoDweet_OTA_web.ino is the example sketch.
-This sketch reads every 1h all values from the Arduino board and update them to the Dweet.io service every 4h. 
-It integrates FLASH management to collect all data before transmit them. 
-Moreover integrates the update of the firmware via OTA using a web page.
-To enter UPDATE Modality you need to press RESET Button (S2) and immeditely press repetitively USER Button (S1). When in UPDATE Mod led will blink faster.
-Then copy one of the two links after sentence "My Update Page is:" on Serial Monitor and paste it on your web browser.
-It is necessary to select binary file from local disk compiled by Arduino IDE (ex. /tmp/arduino_build_815021/AgruminoDweet_OTA_web.ino).
-Then select update button and after reboot new sketch will be executed on Agrumino board.
+### Web Browser
 
-* HTTP Server  checks for updates and download a binary file from HTTP web server. It is possible to download updates from every IP or domain address.
+In this mode the board is running a webserver. The user connects to the board's IP address and can upload the new binary by clicking on the upload button.
 
-### Update process
+### HTTP Server
+
+In this mode the board checks for updates and download a binary file from HTTP web server. It is possible to download updates from every IP or domain address,
+for details see source code.
+
+## Update process
 
 1. The new sketch will be stored in the space between the old sketch and the spiff.
 2. on the next reboot, the “eboot” bootloader checks for commands.
