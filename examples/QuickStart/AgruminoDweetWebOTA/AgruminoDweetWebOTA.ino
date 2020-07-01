@@ -20,8 +20,6 @@
 #include "Agrumino.h"           // Our super cool lib ;)
 #include <ESP8266WiFi.h>        // https://github.com/esp8266/Arduino
 #include <DNSServer.h>          // Installed from ESP8266 board
-//#include <ESP8266WebServer.h>   // Installed from ESP8266 board
-//#include <WiFiManager.h>        // https://github.com/tzapu/WiFiManager
 #include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
 
 //  ***start AsyncElegantOTA 
@@ -50,7 +48,6 @@ String deviceNameMDNS = "";
 const char* WEB_SERVER_HOST = "dweet.io";
 const String WEB_SERVER_API_SEND_DATA = "/dweet/quietly/for/"; // The Dweet name is created in the loop() method.
 
-#define PUSH_1   4
 uint8_t push_1_lock = 0;
 uint32_t timec=0, prevtimec=0;
 
@@ -79,13 +76,11 @@ uint32_t calculateCRC32(const uint8_t *data, size_t length);
 void cleanMemory();
 void blinkLed(int duration, int blinks);
 
-
 ////////////////////////////////////////
 // HTTP methods function prototypes/////
 ////////////////////////////////////////
 String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge);
 void sendData(String dweetName, float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge);
-
 
 void setup() {
 
@@ -96,11 +91,6 @@ void setup() {
 
   // Turn on the board to allow the usage of the Led
   agrumino.turnBoardOn();
-
-  pinMode(PUSH_1, INPUT_PULLUP);
-
-  // WiFiManager Logic taken from
-  // https://github.com/kentaylor/WiFiManager/blob/master/examples/ConfigOnSwitch/ConfigOnSwitch.ino
 
   // With batteryCheck true will return true only if the Agrumino is attached to USB with a valid power
   boolean resetWifi = checkIfResetWiFiSettings(true);
@@ -113,11 +103,7 @@ void setup() {
     blinkLed(100, 5);
     agrumino.turnLedOn();
 
-//    WiFiManager wifiManager;
-
-//  AsyncElegantOTA  start
     AsyncWiFiManager wifiManager(&server,&dns);
-//  AsyncElegantOTA  end
 
     // Customize the web configuration web page
     wifiManager.setCustomHeadElement("<h1>Agrumino</h1>");
@@ -169,7 +155,6 @@ void setup() {
 
  // Serial.println("-----------> " + String(getChipId().toInt(), HEX));
 
-  
   // To use MDNS please install avahi on linux, bonjour on windows   a3398435  a33db23
   if (!MDNS.begin(deviceNameMDNS)) {  
     Serial.println("Error setting up MDNS responder!");  
@@ -179,18 +164,14 @@ void setup() {
     Serial.println("mDNS responder started");  
   }
   
-//  AsyncElegantOTA  start
   Serial.println("Starting HTTP server.....");
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/html", "<html lang=\"en\">  <head><meta charset=\"utf-8\"> <title> The Agrumino summary page </title> </head><body><h1> Hi! I am your <i> Agrumino. </i> </h1></br>My local IP is: " + myLocalIP + "</br></br>My MDNS name is: " + deviceNameMDNS + ".local</br></br>My update page is: http://" + deviceNameMDNS + ".local/update (or http://" + myLocalIP + "/update)  </body></html>");
   });
 
-  AsyncElegantOTA.begin(&server);    // Start ElegantOTA
+  AsyncElegantOTA.begin(&server);
   server.begin();
   Serial.println("HTTP server started");
-//  AsyncElegantOTA  end
-
-  
 
   // Initialize EEPROM and pointer
   Serial.println("Initializing EEPROM...");
@@ -278,17 +259,15 @@ void loop() {
   if(timec-prevtimec >= 250)  // Here we manage button every 250ms
   { 
 
-  if(digitalRead(PUSH_1)==LOW)
+  if(digitalRead(PIN_BTN_S1)==LOW)
   {
     delay(50);
-    if(digitalRead(PUSH_1)==LOW)
+    if(digitalRead(PIN_BTN_S1)==LOW)
     {
       if(push_1_lock != 1)
       {
         push_1_lock = 1;
-        // qui fa qualcosa
         Serial.println("-------> Button Pressed");
-
       }
     }
   }
