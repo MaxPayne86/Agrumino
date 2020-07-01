@@ -202,14 +202,11 @@ void loop() {
 
         // we reboot the board only after the deepsleep
         ESPhttpUpdate.rebootOnUpdate(false);
-        t_httpUpdate_return ret = ESPhttpUpdate.update(
-            client, String(BIN_SERVER_URL) +
-                        "AgruminoDweetWithCaptiveWifiSample_"
-                        "FLASH_STRUCT_OTA_HTTP.ino.bin");
+        t_httpUpdate_return ret = ESPhttpUpdate.update(client, String(BIN_SERVER_URL) + "AgruminoDweetHttpOTA.ino.bin");
         // Or:
         // t_httpUpdate_return ret = ESPhttpUpdate.update(client,
         // "servername.com", 80,
-        // "agruminoupdates/AgruminoDweetWithCaptiveWifiSample_FLASH_STRUCT_OTA_HTTP.ino.bin");
+        // "agruminoupdates/AgruminoDweetHttpOTA.ino.bin");
 
         switch (ret) {
         case HTTP_UPDATE_FAILED:
