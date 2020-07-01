@@ -23,10 +23,8 @@
 // The size of the flash sector we want to use to store samples (do not modify).
 #define SECTOR_SIZE 4096u
 
-//const String DEVICE_KEY = ""; // Set to use a predefined device key or leave empty to automatically configure
-//const String DEVICE_TOKEN = "TEST-TOKEN"; // Set to use a predefined device token or leave empty to automatically configure
-const String DEVICE_KEY = "turntable-005";
-const String DEVICE_TOKEN = "6c421d2842783f784630b22d9021df50ec60c10f";
+const String DEVICE_KEY = ""; // Set to use a predefined device key or leave empty to automatically configure
+const String DEVICE_TOKEN = "TEST-TOKEN"; // Set to use a predefined device token or leave empty to automatically configure
 
 // Web Server data, in our sample we use Dweet.io.
 const char* WEB_SERVER_HOST = "api.lifely.cc";
