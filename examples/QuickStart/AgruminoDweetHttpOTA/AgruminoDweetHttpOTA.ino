@@ -202,7 +202,8 @@ void loop() {
 
         // we reboot the board only after the deepsleep
         ESPhttpUpdate.rebootOnUpdate(false);
-        t_httpUpdate_return ret = ESPhttpUpdate.update(client, String(BIN_SERVER_URL) + "AgruminoDweetHttpOTA.ino.bin");
+        t_httpUpdate_return ret = ESPhttpUpdate.update(
+            client, String(BIN_SERVER_URL) + "AgruminoDweetHttpOTA.ino.bin");
         // Or:
         // t_httpUpdate_return ret = ESPhttpUpdate.update(client,
         // "servername.com", 80,
@@ -215,7 +216,8 @@ void loop() {
                         ESPhttpUpdate.getLastErrorString().c_str());
           break;
 
-        case HTTP_UPDATE_NO_UPDATES: // Should never go here with Simple updater see ota_updates doc in the core
+        case HTTP_UPDATE_NO_UPDATES: // Should never go here with Simple updater
+                                     // see ota_updates doc in the core
           Serial.println("HTTP_UPDATE_NO_UPDATES");
           break;
 
