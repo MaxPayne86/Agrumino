@@ -25,7 +25,7 @@
 #include <DNSServer.h>   // Installed from ESP8266 board
 #include <ESP8266WiFi.h> // https://github.com/esp8266/Arduino
 
-//  ***start AsyncElegantOTA
+
 #include <AsyncElegantOTA.h>   //installed from Manages Libraries
 #include <ESPAsyncTCP.h>       //https://github.com/me-no-dev/ESPAsyncTCP
 #include <ESPAsyncWebServer.h> //https://github.com/me-no-dev/ESPAsyncWebServer
@@ -36,7 +36,7 @@ AsyncWebServer server(80);
 DNSServer dns;
 
 #include <ESP8266mDNS.h>;
-//  ***end AsyncElegantOTA
+
 
 String myLocalIP = "";
 String deviceNameMDNS = "";
@@ -215,90 +215,21 @@ void setup() {
   }
 }
 
+
 void loop() {
   Serial.println("\n#########################\n");
   Serial.println("My local IP is: " + myLocalIP);
   Serial.println("My MDNS name is: " + deviceNameMDNS + ".local");
   Serial.println("My update page is: http://" + deviceNameMDNS +
                  ".local/update (or http://" + myLocalIP + "/update)");
-  Serial.println("\n\n");
-
-  MDNS.update();
-
-  AsyncElegantOTA.loop();
-
-  agrumino.turnBoardOn();
-  agrumino.turnLedOn();
-
-  // Variable currentIndex is the last memorized struct of sensor data
-  currentIndex = PtrFlashMemory->Fields.index;
-  if (currentIndex > N_SAMPLES - 1) { // Circular buffer behaviour
-    currentIndex = 0;
-    PtrFlashMemory->Fields.index = currentIndex;
-  }
-
-  Serial.println("*****   CURRENT INDEX IS:  " + String(currentIndex));
-
-  // Copy sensors data to struct
-  PtrFlashMemory->Fields.data.vector[currentIndex].temp = agrumino.readTempC();
-  PtrFlashMemory->Fields.data.vector[currentIndex].soil = agrumino.readSoil();
-  PtrFlashMemory->Fields.data.vector[currentIndex].lux = agrumino.readLux();
-  PtrFlashMemory->Fields.data.vector[currentIndex].batt =
-      agrumino.readBatteryVoltage();
-  PtrFlashMemory->Fields.data.vector[currentIndex].battLevel =
-      agrumino.readBatteryLevel();
-  PtrFlashMemory->Fields.data.vector[currentIndex].usb =
-      agrumino.isAttachedToUSB();
-  PtrFlashMemory->Fields.data.vector[currentIndex].charge =
-      agrumino.isBatteryCharging();
-
-  PtrFlashMemory->Fields.index++; // Increment index
-
-  Serial.println("temperature:       " +
-                 String(PtrFlashMemory->Fields.data.vector[currentIndex].temp) +
-                 "°C");
-  Serial.println("soilMoisture:      " +
-                 String(PtrFlashMemory->Fields.data.vector[currentIndex].soil) +
-                 "%");
-  Serial.println("illuminance :      " +
-                 String(PtrFlashMemory->Fields.data.vector[currentIndex].lux) +
-                 " lux");
-  Serial.println("batteryVoltage :   " +
-                 String(PtrFlashMemory->Fields.data.vector[currentIndex].batt) +
-                 " V");
-  Serial.println(
-      "batteryLevel :     " +
-      String(PtrFlashMemory->Fields.data.vector[currentIndex].battLevel) + "%");
-  Serial.println("isAttachedToUSB:   " +
-                 String(PtrFlashMemory->Fields.data.vector[currentIndex].usb));
-  Serial.println(
-      "isBatteryCharging: " +
-      String(PtrFlashMemory->Fields.data.vector[currentIndex].charge));
-  Serial.println();
-
-  // Calculate checksum
-  crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
-  crc8b = (uint8_t)crc32b & 0xff;
-  Serial.println("New CRC32=" + String(crc8b));
-  EEPROM.write(SECTOR_SIZE - 1, crc8b); // Put crc at the end of sector
-
-  // With EEPROM.commit() we write all our data from RAM
-  // to flash in one block. Actually the entire sector is written (#SECTOR_SIZE
-  // bytes). Byte-level access to ESP's flash is not possible with this flash
-  // chip.
-  if (EEPROM.commit()) {
-    Serial.println("EEPROM successfully committed");
-  } else {
-    Serial.println("ERROR! EEPROM commit failed");
-  }
+  Serial.println("\n\n");  
 
   timec = millis();
   if (timec - prevtimec >= 250) // Here we manage button every 250ms
   {
-
-    if (digitalRead(PIN_BTN_S1) == LOW) {
+    if (agrumino.isButtonPressed()) {
       delay(50);
-      if (digitalRead(PIN_BTN_S1) == LOW) {
+      if (agrumino.isButtonPressed()) {
         if (s1_lock != 1) {
           s1_lock = 1;
           Serial.println("-------> Button Pressed");
@@ -318,42 +249,111 @@ void loop() {
     Serial.println("....................................NORMAL MODE");
   }
 
-  // We have the queue full, we need to consume data and send to cloud.
-  // Variable currentIndex will be resetted @next loop.
-  if ((currentIndex == N_SAMPLES - 1) && !s1_lock) {
-    // Change this if you whant to change your thing name
-    // We use the chip Id to avoid name clashing
-    String dweetThingName = "Agrumino-" + getChipId();
+  MDNS.update();
 
-    Serial.println("Now I'm sending " + String(N_SAMPLES) +
-                   " json(s) to Dweet");
-    for (uint8_t i = 0; i < N_SAMPLES; i++) {
-      // Send data to our web service
-      Serial.println("Sending json n° " + String(i + 1) + " to Dweet");
-      sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp,
-               PtrFlashMemory->Fields.data.vector[i].soil,
-               PtrFlashMemory->Fields.data.vector[i].lux,
-               PtrFlashMemory->Fields.data.vector[i].batt,
-               PtrFlashMemory->Fields.data.vector[i].battLevel,
-               PtrFlashMemory->Fields.data.vector[i].usb,
-               PtrFlashMemory->Fields.data.vector[i].charge);
-      delay(5000);
-    }
+  if(s1_lock) {
+      blinkLed(100, 5);
+      AsyncElegantOTA.loop();
   }
+  else {
+    agrumino.turnBoardOn();
+    agrumino.turnLedOn();
+    
+    // Variable currentIndex is the last memorized struct of sensor data
+    currentIndex = PtrFlashMemory->Fields.index;
+    if (currentIndex > N_SAMPLES - 1) { // Circular buffer behaviour
+      currentIndex = 0;
+      PtrFlashMemory->Fields.index = currentIndex;
+    }
+    
+    Serial.println("*****   CURRENT INDEX IS:  " + String(currentIndex));
+  
+    // Copy sensors data to struct
+    PtrFlashMemory->Fields.data.vector[currentIndex].temp = agrumino.readTempC();
+    PtrFlashMemory->Fields.data.vector[currentIndex].soil = agrumino.readSoil();
+    PtrFlashMemory->Fields.data.vector[currentIndex].lux = agrumino.readLux();
+    PtrFlashMemory->Fields.data.vector[currentIndex].batt = agrumino.readBatteryVoltage();
+    PtrFlashMemory->Fields.data.vector[currentIndex].battLevel = agrumino.readBatteryLevel();
+    PtrFlashMemory->Fields.data.vector[currentIndex].usb = agrumino.isAttachedToUSB();
+    PtrFlashMemory->Fields.data.vector[currentIndex].charge = agrumino.isBatteryCharging();
+  
+    PtrFlashMemory->Fields.index++; // Increment index
+  
+    Serial.println("temperature:       " +
+                   String(PtrFlashMemory->Fields.data.vector[currentIndex].temp) +
+                   "°C");
+    Serial.println("soilMoisture:      " +
+                   String(PtrFlashMemory->Fields.data.vector[currentIndex].soil) +
+                   "%");
+    Serial.println("illuminance :      " +
+                   String(PtrFlashMemory->Fields.data.vector[currentIndex].lux) +
+                   " lux");
+    Serial.println("batteryVoltage :   " +
+                   String(PtrFlashMemory->Fields.data.vector[currentIndex].batt) +
+                   " V");
+    Serial.println(
+        "batteryLevel :     " +
+        String(PtrFlashMemory->Fields.data.vector[currentIndex].battLevel) + "%");
+    Serial.println("isAttachedToUSB:   " +
+                   String(PtrFlashMemory->Fields.data.vector[currentIndex].usb));
+    Serial.println(
+        "isBatteryCharging: " +
+        String(PtrFlashMemory->Fields.data.vector[currentIndex].charge));
+    Serial.println();
 
-  // Blink when the business is done for giving an Ack to the user
-  blinkLed(200, 2);
+    // Calculate checksum
+    crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
+    crc8b = (uint8_t)crc32b & 0xff;
+    Serial.println("New CRC32=" + String(crc8b));
+    EEPROM.write(SECTOR_SIZE - 1, crc8b); // Put crc at the end of sector
+  
+    // With EEPROM.commit() we write all our data from RAM
+    // to flash in one block. Actually the entire sector is written (#SECTOR_SIZE
+    // bytes). Byte-level access to ESP's flash is not possible with this flash
+    // chip.
+    if (EEPROM.commit()) {
+      Serial.println("EEPROM successfully committed");
+    } else {
+      Serial.println("ERROR! EEPROM commit failed");
+    }
 
-  // Board off before delay/sleep to save battery :)
-  agrumino.turnBoardOff();
+    // We have the queue full, we need to consume data and send to cloud.
+    // Variable currentIndex will be resetted @next loop.
+    if (currentIndex == N_SAMPLES - 1) {
+      // Change this if you whant to change your thing name
+      // We use the chip Id to avoid name clashing
+      String dweetThingName = "Agrumino-" + getChipId();
+  
+      Serial.println("Now I'm sending " + String(N_SAMPLES) +
+                     " json(s) to Dweet");
+      for (uint8_t i = 0; i < N_SAMPLES; i++) {
+        // Send data to our web service
+        Serial.println("Sending json n° " + String(i + 1) + " to Dweet");
+        sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp,
+                 PtrFlashMemory->Fields.data.vector[i].soil,
+                 PtrFlashMemory->Fields.data.vector[i].lux,
+                 PtrFlashMemory->Fields.data.vector[i].batt,
+                 PtrFlashMemory->Fields.data.vector[i].battLevel,
+                 PtrFlashMemory->Fields.data.vector[i].usb,
+                 PtrFlashMemory->Fields.data.vector[i].charge);
+        delay(5000);
+      }
+    }
 
-  if (!s1_lock) {
+    // Blink when the business is done for giving an Ack to the user
+    blinkLed(200, 2);
+  
+    // Board off before delay/sleep to save battery :)
+    agrumino.turnBoardOff();
+  
+
     // delaySec(SLEEP_TIME_SEC); // The ESP8266 stays powered, executes the loop
     // repeatedly
     agrumino.deepSleepSec(
         SLEEP_TIME_SEC); // ESP8266 enter in deepSleep and after the selected
                          // time starts back from setup() and then loop()
-  }
+ 
+  } 
 }
 
 //////////////////
