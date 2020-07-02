@@ -1,6 +1,5 @@
 /*
-   /*
-  AgruminoCaptiveWiSample.ino - Sample project for Agrumino board using the Agrumino library.
+  AgruminoBringUp.ino - Sample project for Agrumino board using the Agrumino library.
   !!!WARNING!!! You need to program the board with option Tools->Erase Flash->All Flash Contents
 
   Created June 2020 by:

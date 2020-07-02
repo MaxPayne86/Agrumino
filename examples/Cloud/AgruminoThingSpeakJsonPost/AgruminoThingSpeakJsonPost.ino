@@ -1,5 +1,7 @@
 /*
-  AgruminoThingSpeakxxx.ino
+  AgruminoThingSpeakJsonPost.ino - Sample project for Agrumino board using the Agrumino library.
+  !!!WARNING!!! You need to program the board with option Tools->Erase Flash->All Flash Contents
+  
   Created by Paolo Paolucci on May 2018.
   Modified June 2020 by:
   Massimo Pennazio massimo.pennazio@abinsula.com
