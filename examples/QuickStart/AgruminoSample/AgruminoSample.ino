@@ -1,8 +1,8 @@
 /*
-  AgruminoSample.ino - Sample project for Agrumino board using the Agrumino library.
-  Created by giuseppe.broccia@lifely.cc on October 2017.
-  
-  This sketch read all the values from the Agrumino Board 
+  AgruminoSample.ino - Sample project for Agrumino board using the Agrumino
+  library. Created by giuseppe.broccia@lifely.cc on October 2017.
+
+  This sketch read all the values from the Agrumino Board
   and print them in the serial console every 30 sec.
 
   @see Agrumino.h for the documentation of the lib
@@ -24,13 +24,13 @@ void loop() {
 
   agrumino.turnBoardOn();
 
-  boolean isAttachedToUSB =   agrumino.isAttachedToUSB();
+  boolean isAttachedToUSB = agrumino.isAttachedToUSB();
   boolean isBatteryCharging = agrumino.isBatteryCharging();
-  boolean isButtonPressed =   agrumino.isButtonPressed();
-  float temperature =         agrumino.readTempC();
+  boolean isButtonPressed = agrumino.isButtonPressed();
+  float temperature = agrumino.readTempC();
   unsigned int soilMoisture = agrumino.readSoil();
-  float illuminance =         agrumino.readLux();
-  float batteryVoltage =      agrumino.readBatteryVoltage();
+  float illuminance = agrumino.readLux();
+  float batteryVoltage = agrumino.readBatteryVoltage();
   unsigned int batteryLevel = agrumino.readBatteryLevel();
 
   Serial.println("");
@@ -54,8 +54,11 @@ void loop() {
 
   agrumino.turnBoardOff(); // Board off before delay/sleep to save battery :)
 
-  // delaySec(SLEEP_TIME_SEC); // The ESP8266 stays powered, executes the loop repeatedly
-  deepSleepSec(SLEEP_TIME_SEC); // ESP8266 enter in deepSleep and after the selected time starts back from setup() and then loop()
+  // delaySec(SLEEP_TIME_SEC); // The ESP8266 stays powered, executes the loop
+  // repeatedly
+  deepSleepSec(
+      SLEEP_TIME_SEC); // ESP8266 enter in deepSleep and after the selected time
+                       // starts back from setup() and then loop()
 }
 
 /////////////////////
@@ -68,9 +71,7 @@ void blinkLed() {
   agrumino.turnLedOff();
 }
 
-void delaySec(int sec) {
-  delay (sec * 1000);
-}
+void delaySec(int sec) { delay(sec * 1000); }
 
 void deepSleepSec(int sec) {
   ESP.deepSleep(sec * 1000000); // microseconds
