@@ -1,13 +1,13 @@
 /*
-  AgruminoThingSpeakWithCaptiveWifixxx.ino
+  AgruminoThingSpeakxxx.ino
   Created by Paolo Paolucci on May 2018.
   Modified June 2020 by:
   Massimo Pennazio massimo.pennazio@abinsula.com
   Martina Mascia martina.mascia@abinsula.com
   Ricardo Medda ricardo.medda@abinsula.com
 
-  This sketch Sketch save sensor data of Agrumino board
-  on FLASH and after 4 cycles transmits data to Thing Speak
+  This sketch Sketch save sensor data of Agrumino board on FLASH 
+  and after 4 cycles transmits data to Thing Speak
   with 4 different HTTP POST. 
   
   @see Agrumino.h for the documentation of the lib

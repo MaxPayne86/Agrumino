@@ -1,5 +1,5 @@
 /*
-  AgruminoCaptiveWiSample.ino - Sample project for Agrumino board using the Agrumino library.
+  AgruminoDweet.ino - Sample project for Agrumino board using the Agrumino library.
   !!!WARNING!!! You need to program the board with option Tools->Erase Flash->All Flash Contents
 
   Created by giuseppe.broccia@lifely.cc on October 2017.
@@ -7,6 +7,10 @@
   Massimo Pennazio massimo.pennazio@abinsula.com
   Martina Mascia martina.mascia@abinsula.com
   Ricardo Medda ricardo.medda@abinsula.com
+
+  This sketch reads every 1h all values from the Arduino board 
+  and update them to the Dweet.io service every 4h. 
+  It integrates FLASH management to collect all data before transmit them.
 
   @see Agrumino.h for the documentation of the lib
 */
