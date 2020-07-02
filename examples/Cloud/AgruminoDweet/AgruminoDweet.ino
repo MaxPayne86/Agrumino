@@ -1,6 +1,8 @@
 /*
-  AgruminoDweet.ino - Sample project for Agrumino board using the Agrumino library.
-  !!!WARNING!!! You need to program the board with option Tools->Erase Flash->All Flash Contents
+  AgruminoDweet.ino - Sample project for Agrumino board using the Agrumino
+  library.
+  !!!WARNING!!! You need to program the board with option
+  Tools->Erase Flash->All Flash Contents
 
   Created by giuseppe.broccia@lifely.cc on October 2017.
   Modified June 2020 by:
@@ -8,18 +10,18 @@
   Martina Mascia martina.mascia@abinsula.com
   Ricardo Medda ricardo.medda@abinsula.com
 
-  This sketch reads every 1h all values from the Arduino board 
-  and update them to the Dweet.io service every 4h. 
+  This sketch reads every 1h all values from the Arduino board
+  and update them to the Dweet.io service every 4h.
   It integrates FLASH management to collect all data before transmit them.
 
   @see Agrumino.h for the documentation of the lib
 */
-#include "Agrumino.h"           // Our super cool lib ;)
-#include <ESP8266WiFi.h>        // https://github.com/esp8266/Arduino
-#include <DNSServer.h>          // Installed from ESP8266 board
-#include <ESP8266WebServer.h>   // Installed from ESP8266 board
-#include <WiFiManager.h>        // https://github.com/tzapu/WiFiManager
-#include <ArduinoJson.h>        // https://github.com/bblanchon/ArduinoJson
+#include "Agrumino.h"         // Our super cool lib ;)
+#include <ArduinoJson.h>      // https://github.com/bblanchon/ArduinoJson
+#include <DNSServer.h>        // Installed from ESP8266 board
+#include <ESP8266WebServer.h> // Installed from ESP8266 board
+#include <ESP8266WiFi.h>      // https://github.com/esp8266/Arduino
+#include <WiFiManager.h>      // https://github.com/tzapu/WiFiManager
 
 // Time to sleep in second between the readings/data sending
 #define SLEEP_TIME_SEC 3600 // [Seconds]
@@ -28,8 +30,9 @@
 #define SECTOR_SIZE 4096u
 
 // Web Server data, in our sample we use Dweet.io.
-const char* WEB_SERVER_HOST = "dweet.io";
-const String WEB_SERVER_API_SEND_DATA = "/dweet/quietly/for/"; // The Dweet name is created in the loop() method.
+const char *WEB_SERVER_HOST = "dweet.io";
+const String WEB_SERVER_API_SEND_DATA =
+    "/dweet/quietly/for/"; // The Dweet name is created in the loop() method.
 
 // Our super cool lib
 Agrumino agrumino;
@@ -59,7 +62,8 @@ void setup() {
   // WiFiManager Logic taken from
   // https://github.com/kentaylor/WiFiManager/blob/master/examples/ConfigOnSwitch/ConfigOnSwitch.ino
 
-  // With batteryCheck true will return true only if the Agrumino is attached to USB with a valid power
+  // With batteryCheck true will return true only if the Agrumino is attached to
+  // USB with a valid power
   boolean resetWifi = checkIfResetWiFiSettings(true);
   boolean hasWifiCredentials = WiFi.SSID().length() > 0;
 
@@ -80,7 +84,8 @@ void setup() {
     // switched off via webserver or device is restarted.
     // wifiManager.setConfigPortalTimeout(600);
 
-    // Starts an access point and goes into a blocking loop awaiting configuration
+    // Starts an access point and goes into a blocking loop awaiting
+    // configuration
     String ssidAP = "Agrumino-AP-" + getChipId();
     boolean gotConnection = wifiManager.startConfigPortal(ssidAP.c_str());
 
@@ -95,7 +100,8 @@ void setup() {
 
   } else {
     // Try to connect to saved network
-    // Force to station mode because if device was switched off while in access point mode it will start up next time in access point mode.
+    // Force to station mode because if device was switched off while in access
+    // point mode it will start up next time in access point mode.
     agrumino.turnLedOn();
     WiFi.mode(WIFI_STA);
     WiFi.waitForConnectResult();
@@ -119,19 +125,21 @@ void setup() {
   Serial.println("Initializing EEPROM...");
   EEPROM.begin(SECTOR_SIZE);
 
-  PtrFlashMemory = (flashMemory_t *)EEPROM.getDataPtr(); // Assigning pointer address to flash memory block dumped in RAM
+  PtrFlashMemory =
+      (flashMemory_t *)EEPROM.getDataPtr(); // Assigning pointer address to
+                                            // flash memory block dumped in RAM
   Serial.println("Memory assignement successful!");
 
   // Calculate checksum and validate memory area
   // TODO: use 32bit crc
   crc32b = calculateCRC32(PtrFlashMemory->Bytes, sizeof(Fields_t));
   crc8b = EEPROM.read(SECTOR_SIZE - 1); // Read crc at the end of sector
-  Serial.println("CRC32 calculated=" + String(crc32b & 0xff) + " readed=" + String(crc8b));
+  Serial.println("CRC32 calculated=" + String(crc32b & 0xff) + " readed=" +
+                 String(crc8b));
 
   if (((uint8_t)crc32b & 0xff) == crc8b)
     Serial.println("CRC32 pass!");
-  else
-  {
+  else {
     Serial.println("CRC32 fail! Cleaning memory...");
     cleanMemory();
   }
@@ -156,20 +164,37 @@ void loop() {
   PtrFlashMemory->Fields.data.vector[currentIndex].temp = agrumino.readTempC();
   PtrFlashMemory->Fields.data.vector[currentIndex].soil = agrumino.readSoil();
   PtrFlashMemory->Fields.data.vector[currentIndex].lux = agrumino.readLux();
-  PtrFlashMemory->Fields.data.vector[currentIndex].batt = agrumino.readBatteryVoltage();
-  PtrFlashMemory->Fields.data.vector[currentIndex].battLevel = agrumino.readBatteryLevel();
-  PtrFlashMemory->Fields.data.vector[currentIndex].usb = agrumino.isAttachedToUSB();
-  PtrFlashMemory->Fields.data.vector[currentIndex].charge = agrumino.isBatteryCharging();
+  PtrFlashMemory->Fields.data.vector[currentIndex].batt =
+      agrumino.readBatteryVoltage();
+  PtrFlashMemory->Fields.data.vector[currentIndex].battLevel =
+      agrumino.readBatteryLevel();
+  PtrFlashMemory->Fields.data.vector[currentIndex].usb =
+      agrumino.isAttachedToUSB();
+  PtrFlashMemory->Fields.data.vector[currentIndex].charge =
+      agrumino.isBatteryCharging();
 
   PtrFlashMemory->Fields.index++; // Increment index
 
-  Serial.println("temperature:       " + String(PtrFlashMemory->Fields.data.vector[currentIndex].temp) + "°C");
-  Serial.println("soilMoisture:      " + String(PtrFlashMemory->Fields.data.vector[currentIndex].soil) + "%");
-  Serial.println("illuminance :      " + String(PtrFlashMemory->Fields.data.vector[currentIndex].lux) + " lux");
-  Serial.println("batteryVoltage :   " + String(PtrFlashMemory->Fields.data.vector[currentIndex].batt) + " V");
-  Serial.println("batteryLevel :     " + String(PtrFlashMemory->Fields.data.vector[currentIndex].battLevel) + "%");
-  Serial.println("isAttachedToUSB:   " + String(PtrFlashMemory->Fields.data.vector[currentIndex].usb));
-  Serial.println("isBatteryCharging: " + String(PtrFlashMemory->Fields.data.vector[currentIndex].charge));
+  Serial.println("temperature:       " +
+                 String(PtrFlashMemory->Fields.data.vector[currentIndex].temp) +
+                 "°C");
+  Serial.println("soilMoisture:      " +
+                 String(PtrFlashMemory->Fields.data.vector[currentIndex].soil) +
+                 "%");
+  Serial.println("illuminance :      " +
+                 String(PtrFlashMemory->Fields.data.vector[currentIndex].lux) +
+                 " lux");
+  Serial.println("batteryVoltage :   " +
+                 String(PtrFlashMemory->Fields.data.vector[currentIndex].batt) +
+                 " V");
+  Serial.println(
+      "batteryLevel :     " +
+      String(PtrFlashMemory->Fields.data.vector[currentIndex].battLevel) + "%");
+  Serial.println("isAttachedToUSB:   " +
+                 String(PtrFlashMemory->Fields.data.vector[currentIndex].usb));
+  Serial.println(
+      "isBatteryCharging: " +
+      String(PtrFlashMemory->Fields.data.vector[currentIndex].charge));
   Serial.println();
 
   // Calculate checksum
@@ -179,7 +204,8 @@ void loop() {
   EEPROM.write(SECTOR_SIZE - 1, crc8b); // Put crc at the end of sector
 
   // With EEPROM.commit() we write all our data from RAM
-  // to flash in one block. Actually the entire sector is written (#SECTOR_SIZE bytes).
+  // to flash in one block. Actually the entire sector is written (#SECTOR_SIZE
+  // bytes).
   // Byte-level access to ESP's flash is not possible with this flash chip.
   if (EEPROM.commit()) {
     Serial.println("EEPROM successfully committed");
@@ -194,10 +220,17 @@ void loop() {
     // We use the chip Id to avoid name clashing
     String dweetThingName = "Agrumino-" + getChipId();
 
-    Serial.println("Now I'm sending " + String(N_SAMPLES) + " json(s) to Dweet");
+    Serial.println("Now I'm sending " + String(N_SAMPLES) +
+                   " json(s) to Dweet");
     for (uint8_t i = 0; i < N_SAMPLES; i++) {
       // Send data to our web service
-      sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp, PtrFlashMemory->Fields.data.vector[i].soil, PtrFlashMemory->Fields.data.vector[i].lux, PtrFlashMemory->Fields.data.vector[i].batt, PtrFlashMemory->Fields.data.vector[i].battLevel, PtrFlashMemory->Fields.data.vector[i].usb, PtrFlashMemory->Fields.data.vector[i].charge);
+      sendData(dweetThingName, PtrFlashMemory->Fields.data.vector[i].temp,
+               PtrFlashMemory->Fields.data.vector[i].soil,
+               PtrFlashMemory->Fields.data.vector[i].lux,
+               PtrFlashMemory->Fields.data.vector[i].batt,
+               PtrFlashMemory->Fields.data.vector[i].battLevel,
+               PtrFlashMemory->Fields.data.vector[i].usb,
+               PtrFlashMemory->Fields.data.vector[i].charge);
       delay(5000);
     }
   }
@@ -208,19 +241,25 @@ void loop() {
   // Board off before delay/sleep to save battery :)
   agrumino.turnBoardOff();
 
-  // delaySec(SLEEP_TIME_SEC); // The ESP8266 stays powered, executes the loop repeatedly
-  agrumino.deepSleepSec(SLEEP_TIME_SEC); // ESP8266 enter in deepSleep and after the selected time starts back from setup() and then loop()
+  // delaySec(SLEEP_TIME_SEC); // The ESP8266 stays powered, executes the loop
+  // repeatedly
+  agrumino.deepSleepSec(SLEEP_TIME_SEC); // ESP8266 enter in deepSleep and after
+                                         // the selected time starts back from
+                                         // setup() and then loop()
 }
 
 //////////////////
 // HTTP methods //
 //////////////////
 
-void sendData(String dweetName, float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge) {
+void sendData(String dweetName, float temp, int soil, float lux, float batt,
+              unsigned int battLevel, boolean usb, boolean charge) {
 
-  String bodyJsonString = getSendDataBodyJsonString(temp,  soil,  lux,  batt, battLevel, usb, charge );
+  String bodyJsonString =
+      getSendDataBodyJsonString(temp, soil, lux, batt, battLevel, usb, charge);
 
-  // Use WiFiClient class to create TCP connections, we try until the connection is estabilished
+  // Use WiFiClient class to create TCP connections, we try until the connection
+  // is estabilished
   while (!client.connect(WEB_SERVER_HOST, 80)) {
     Serial.println("connection failed\n");
     delay(1000);
@@ -233,7 +272,8 @@ void sendData(String dweetName, float temp, int soil, float lux, float batt, uns
   Serial.println("###################################\n");
 
   // Print the HTTP POST API data for debug
-  Serial.println("Requesting POST: " + String(WEB_SERVER_HOST) + WEB_SERVER_API_SEND_DATA + dweetName);
+  Serial.println("Requesting POST: " + String(WEB_SERVER_HOST) +
+                 WEB_SERVER_API_SEND_DATA + dweetName);
   Serial.println("Requesting POST: " + bodyJsonString);
 
   // This will send the request to the server
@@ -275,23 +315,25 @@ void sendData(String dweetName, float temp, int soil, float lux, float batt, uns
 }
 
 // Returns the Json body that will be sent to the send data HTTP POST API
-String getSendDataBodyJsonString(float temp, int soil, float lux, float batt, unsigned int battLevel, boolean usb, boolean charge) {
-  
+String getSendDataBodyJsonString(float temp, int soil, float lux, float batt,
+                                 unsigned int battLevel, boolean usb,
+                                 boolean charge) {
+
   String input = "{}";
-  deserializeJson(doc, input); //resets the document
+  deserializeJson(doc, input); // resets the document
   JsonObject jsonPost = doc.as<JsonObject>();
-  
+
   jsonPost["temp"] = String(temp);
   jsonPost["soil"] = String(soil);
-  jsonPost["lux"]  = String(lux);
+  jsonPost["lux"] = String(lux);
   jsonPost["battVolt"] = String(batt);
   jsonPost["battLevel"] = String(battLevel);
   jsonPost["battCharging"] = String(charge);
-  jsonPost["usbConnected"]  = String(usb);
+  jsonPost["usbConnected"] = String(usb);
 
   String jsonPostString;
-  serializeJson(doc, jsonPostString); //create a minified JSON document
-  
+  serializeJson(doc, jsonPostString); // create a minified JSON document
+
   return jsonPostString;
 }
 
@@ -310,25 +352,25 @@ void blinkLed(int duration, int blinks) {
   }
 }
 
-void delaySec(int sec) {
-  delay (sec * 1000);
-}
+void delaySec(int sec) { delay(sec * 1000); }
 
 const String getChipId() {
   // Returns the ESP Chip ID, Typical 7 digits
   return String(ESP.getChipId());
 }
 
-// If the Agrumino S1 button is pressed for 5 secs then reset the wifi saved settings.
-// If "checkBattery" is true the method return true only if the USB is connected.
+// If the Agrumino S1 button is pressed for 5 secs then reset the wifi saved
+// settings.
+// If "checkBattery" is true the method return true only if the USB is
+// connected.
 boolean checkIfResetWiFiSettings(boolean checkBattery) {
   int delayMs = 100;
   int remainingsLoops = (5 * 1000) / delayMs;
   Serial.print("\nCheck if reset WiFi settings: ");
-  while (remainingsLoops > 0
-         && agrumino.isButtonPressed()
-         && (agrumino.isAttachedToUSB() || !checkBattery) // The Agrumino must be attached to USB
-        ) {
+  while (remainingsLoops > 0 && agrumino.isButtonPressed() &&
+         (agrumino.isAttachedToUSB() ||
+          !checkBattery) // The Agrumino must be attached to USB
+         ) {
     // Blink the led every sec as confirmation
     if (remainingsLoops % 10 == 0) {
       agrumino.turnLedOn();
@@ -351,8 +393,7 @@ boolean checkIfResetWiFiSettings(boolean checkBattery) {
 uint32_t calculateCRC32(const uint8_t *data, size_t length) {
   uint32_t crc = 0xffffffff;
   int i;
-  for (i = 0; i < length; i++)
-  {
+  for (i = 0; i < length; i++) {
     uint8_t c = data[i];
     for (uint32_t i = 0x80; i > 0; i >>= 1) {
       bool bit = crc & 0x80000000;
