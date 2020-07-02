@@ -1,5 +1,5 @@
 /*
-  AgruminoCaptiveWiSample.ino - Sample project for Agrumino board using the
+  AgruminoDweetWebOTA.ino - Sample project for Agrumino board using the
   Agrumino library.
   !!!WARNING!!! You need to program the board with option Tools->Erase
   Flash->All Flash Contents
@@ -12,11 +12,13 @@
 
   This sketch reads every 1h all values from the Arduino board and update them
   to the Dweet.io service every 4h. It integrates FLASH management to collect
-  all data before transmit them. Moreover integrates the update of the firmware
-  via OTA using a web page. To enter UPDATE Modality you need to press RESET
-  Button (S2) and immeditely press repetitively USER Button (S1). When in UPDATE
-  Mod led will blink faster. Then copy one of the two links after sentence "My
-  Update Page is:" on Serial Monitor and paste it on your web browser.
+  all data before transmit them. 
+  Moreover integrates the update of the firmware via OTA using a web page. 
+  To enter UPDATE Modality you need to press RESET Button (S2) 
+  and immeditely press repetitively USER Button (S1). 
+  When in UPDATE Mod led will blink faster. 
+  Then copy one of the two links after sentence "My Update Page is:" 
+  on Serial Monitor and paste it on your web browser.
 
   @see Agrumino.h for the documentation of the lib
 */
