@@ -85,7 +85,6 @@ void setup() {
 }
 
 void loop() {
-  agrumino.turnBoardOn();
   parse_serial();
 }
 
