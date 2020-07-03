@@ -14,8 +14,13 @@
 #define Agrumino_h
 
 #include "Arduino.h"
-
 #include "EEPROM.h"
+
+#ifdef ARDUINO_ESP8266_AGRUMINO_ORANGE_V4
+#warning "Using board Agrumino Lemon v4"
+#else
+#error "Unsupported hardware"
+#endif
 
 #define N_SAMPLES 4u  // Number of objects with samples to store
 
