@@ -16,7 +16,7 @@
 #include "Arduino.h"
 #include "EEPROM.h"
 
-#ifdef ARDUINO_ESP8266_AGRUMINO_ORANGE_V4
+#ifdef ARDUINO_ESP8266_AGRUMINO_LEMON_V4
 #warning "Using board Agrumino Lemon v4"
 #else
 #error "Unsupported hardware"
