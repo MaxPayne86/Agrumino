@@ -71,7 +71,7 @@ void wifiSetup() {
     Serial.print(".");
   }
 
-  if (wifiCount > CONNECTION_ATTEMPS)
+  if (wifiCount >= CONNECTION_ATTEMPS)
   {
     Serial.println("Failed to connect,...sleep....");
     agrumino.turnBoardOff(); // Turn Board off before sleep to save battery :)
